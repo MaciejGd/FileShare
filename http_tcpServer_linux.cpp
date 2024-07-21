@@ -48,14 +48,14 @@ namespace http
     }
     std::string ss;
     std::string addr = inet_ntoa(m_socketAddress.sin_addr);
-    ss = "\n*** Listening on ADDRESS: " + addr + " PORT: " + std::to_string(ntohs(m_socketAddress.sin_port)) + " ***\n\n"; 
+    ss = "\n*** Listening on ADDRESS: " + addr + " PORT: " + std::to_string(ntohs(m_socketAddress.sin_port)) + " ***\n"; 
     log(ss.c_str());
 
     int64_t bytesReceived;
 
     while (true)
     {
-      log("Waiting for a new connection...\n\n");
+      log("Waiting for a new connection...\n");
       acceptConnection(m_new_socket);
 
       char buffer[BUFFER_SIZE] = {0};
@@ -85,19 +85,19 @@ namespace http
   void TcpServer::sendResponse()
   {
     int64_t bytesSent;
-    bytesSent = write(m_new_socket, m_serverMessage, sizeof(m_serverMessage));
-    if (bytesSent == sizeof(m_serverMessage))
-      log("--- Server response sent to client ---\n");
+    bytesSent = write(m_new_socket, m_serverMessage.c_str(), m_serverMessage.size());
+    if (bytesSent == m_serverMessage.size())
+      log("--- Server response sent to client ---\n*********************\n");
     else 
       log("Error sending response to client, some bytes has been lost...");
   }
 
-  const char* TcpServer::buildResponse() {
-    std::string htmlFile = "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :) </p></body></html>";
+  std::string TcpServer::buildResponse() {
+    std::string htmlFile = "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :) </p><div><img src=\"./images/fox.jpg\"></div></body></html>";
     std::ostringstream ss;
-    ss << "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " << htmlFile.size() << "\r\n\r\n"
+    ss << "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: " << htmlFile.size() << "\n\n"
         << htmlFile;
-    return ss.str().c_str();
+    return ss.str();
   }
 
   void TcpServer::signalHandler(int signum)

@@ -26,7 +26,7 @@ namespace http {
     int64_t m_incomingMessage;
     struct sockaddr_in m_socketAddress;
     uint64_t m_socketAddress_len;
-    const char* m_serverMessage;
+    std::string m_serverMessage;
 
     uint8_t startServer();
     void closeServer();
@@ -37,7 +37,7 @@ namespace http {
     void startListen();
     void acceptConnection(int &new_socket);
     void sendResponse(); 
-    const char* buildResponse();
+    std::string buildResponse();
     static void signalHandler(int signum);
   };
 } //namespace http
