@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <stdint.h>
+#include <thread>
 #include <csignal>
 #include <iostream>
 #include <string>
@@ -15,6 +16,7 @@
 
 void log(const char* msg);
 void exitWithError(const char* msg);
+
 
 namespace http {
   class TcpServer
@@ -36,8 +38,11 @@ namespace http {
     ~TcpServer();
     void startListen();
     void acceptConnection(int &new_socket);
-    void sendResponse(); 
+    //response
+    void sendResponse(int new_socket); 
     std::string buildResponse();
+    //handlers
+    void handleClient(int new_socket);
     static void signalHandler(int signum);
   };
 } //namespace http

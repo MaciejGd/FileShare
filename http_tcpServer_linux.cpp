@@ -40,72 +40,6 @@ namespace http
     closeServer();
   }
 
-  void TcpServer::startListen()
-  {
-    if (listen(m_socket, 20) < 0)
-    {
-      exitWithError("Socket listen failed");
-    }
-    std::string ss;
-    std::string addr = inet_ntoa(m_socketAddress.sin_addr);
-    ss = "\n*** Listening on ADDRESS: " + addr + " PORT: " + std::to_string(ntohs(m_socketAddress.sin_port)) + " ***\n"; 
-    log(ss.c_str());
-
-    int64_t bytesReceived;
-
-    while (true)
-    {
-      log("Waiting for a new connection...\n");
-      acceptConnection(m_new_socket);
-
-      char buffer[BUFFER_SIZE] = {0};
-      bytesReceived = read(m_new_socket, buffer, BUFFER_SIZE);
-      if (bytesReceived < 0)
-      {
-        exitWithError("Failed to read bytes from client socket connection");
-      }
-      log("***Received Request from client***");
-      sendResponse();
-      close(m_new_socket);
-    } 
-  }
-
-  void TcpServer::acceptConnection(int &new_socket)
-  {
-    new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
-    if (new_socket < 0)
-    {
-      std::string addr = inet_ntoa(m_socketAddress.sin_addr);
-      std::string info = "Server failed to accept incoming connection from ADDRESS: " + addr + "; PORT: " + 
-          std::to_string(ntohs(m_socketAddress.sin_port));
-      exitWithError(info.c_str());
-    }
-  }
-
-  void TcpServer::sendResponse()
-  {
-    int64_t bytesSent;
-    bytesSent = write(m_new_socket, m_serverMessage.c_str(), m_serverMessage.size());
-    if (bytesSent == m_serverMessage.size())
-      log("--- Server response sent to client ---\n*********************\n");
-    else 
-      log("Error sending response to client, some bytes has been lost...");
-  }
-
-  std::string TcpServer::buildResponse() {
-    std::string htmlFile = "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :) </p><div><img src=\"./images/fox.jpg\"></div></body></html>";
-    std::ostringstream ss;
-    ss << "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: " << htmlFile.size() << "\n\n"
-        << htmlFile;
-    return ss.str();
-  }
-
-  void TcpServer::signalHandler(int signum)
-  {
-    std::string prompt = "***** Process termination, SIG : " + std::to_string(signum) + " sent, closing server.";
-    exitWithError(prompt.c_str());
-  }
-
   uint8_t TcpServer::startServer()
   {
     m_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -124,11 +58,85 @@ namespace http
     close(m_new_socket);
     exit(0);
   }
+
   void TcpServer::fillSocketAddr()
   {
     m_socketAddress.sin_family = AF_INET;
     m_socketAddress.sin_port = htons(m_port);
     m_socketAddress.sin_addr.s_addr = inet_addr(m_ip_address);
-    m_socketAddress_len = sizeof(m_socketAddress);
   }
+
+  void TcpServer::startListen()
+  {
+    if (listen(m_socket, 20) < 0)
+    {
+      exitWithError("Socket listen failed");
+    }
+    std::string ss;
+    std::string addr = inet_ntoa(m_socketAddress.sin_addr);
+    ss = "\n*** Listening on ADDRESS: " + addr + " PORT: " + std::to_string(ntohs(m_socketAddress.sin_port)) + " ***\n"; 
+    log(ss.c_str());
+
+    while (true)
+    {
+      log("Waiting for a new connection...\n");
+      acceptConnection(m_new_socket);
+
+      std::thread clientThread(&TcpServer::handleClient, this, m_new_socket);
+      clientThread.detach();
+    } 
+  }
+
+  void TcpServer::acceptConnection(int &new_socket)
+  {
+    new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
+    if (new_socket < 0)
+    {
+      std::string addr = inet_ntoa(m_socketAddress.sin_addr);
+      std::string info = "Server failed to accept incoming connection from ADDRESS: " + addr + "; PORT: " + 
+          std::to_string(ntohs(m_socketAddress.sin_port));
+      exitWithError(info.c_str());
+    }
+  }
+
+  void TcpServer::sendResponse(int new_socket)
+  {
+    int64_t bytesSent;
+    bytesSent = write(new_socket, m_serverMessage.c_str(), m_serverMessage.size());
+    if (bytesSent == m_serverMessage.size())
+      log("--- Server response sent to client ---\n*********************\n");
+    else 
+      log("Error sending response to client, some bytes has been lost...");
+  }
+
+  std::string TcpServer::buildResponse() {
+    std::string htmlFile = "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :) </p><div><img src=\"./images/fox.jpg\"></div></body></html>";
+    std::ostringstream ss;
+    ss << "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: " << htmlFile.size() << "\n\n"
+        << htmlFile;
+    return ss.str();
+  }
+
+  void TcpServer::handleClient(int new_socket)
+  {
+    char buffer[BUFFER_SIZE] = {0};
+    int64_t bytesReceived = read(new_socket, buffer, BUFFER_SIZE);
+    if (bytesReceived < 0)
+    {
+      exitWithError("Failed to read bytes from client socket connection");
+    }
+    std::string msg = "***Received Request from client, socket descriptor: [" + std::to_string(new_socket) + "]***"; 
+    log(msg.c_str());
+    //log("***Received Request from client***");
+    sendResponse(new_socket);
+    close(new_socket);
+  }
+
+  void TcpServer::signalHandler(int signum)
+  {
+    std::string prompt = "***** Process termination, SIG : " + std::to_string(signum) + " sent, closing server.";
+    exitWithError(prompt.c_str());
+  }
+
+  
 }
