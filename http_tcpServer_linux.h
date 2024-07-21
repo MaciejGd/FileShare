@@ -11,12 +11,17 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <regex>
+//testing
+#include <string.h>
+#include <memory.h>
 
 #define BUFFER_SIZE 120000
 
 void log(const char* msg);
 void exitWithError(const char* msg);
-
+char* url_decode(const char* src);
+std::string getFileExtension(std::string );
 
 namespace http {
   class TcpServer

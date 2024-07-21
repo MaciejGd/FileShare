@@ -11,6 +11,27 @@ void exitWithError(const char *msg)
   exit(1);
 }
 
+char* url_decode(const char *src) {
+    size_t src_len = strlen(src);
+    char *decoded = (char*)malloc(src_len + 1);
+    size_t decoded_len = 0;
+
+    // decode %2x to hex
+    for (size_t i = 0; i < src_len; i++) {
+        if (src[i] == '%' && i + 2 < src_len) {
+            int hex_val;
+            sscanf(src + i + 1, "%2x", &hex_val);
+            decoded[decoded_len++] = hex_val;
+            i += 2;
+        } else {
+            decoded[decoded_len++] = src[i];
+        }
+    }
+
+    // add null terminator
+    decoded[decoded_len] = '\0';
+    return decoded;
+}
 
 namespace http
 {
@@ -110,7 +131,7 @@ namespace http
   }
 
   std::string TcpServer::buildResponse() {
-    std::string htmlFile = "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :) </p><div><img src=\"./images/fox.jpg\"></div></body></html>";
+    std::string htmlFile = "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :) </p><p><img src=\"images/fox.jpg\"></p></body></html>";
     std::ostringstream ss;
     ss << "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: " << htmlFile.size() << "\n\n"
         << htmlFile;
@@ -120,13 +141,22 @@ namespace http
   void TcpServer::handleClient(int new_socket)
   {
     char buffer[BUFFER_SIZE] = {0};
-    int64_t bytesReceived = read(new_socket, buffer, BUFFER_SIZE);
+    int64_t bytesReceived = recv(new_socket, buffer, BUFFER_SIZE, 0);
     if (bytesReceived < 0)
     {
       exitWithError("Failed to read bytes from client socket connection");
     }
-    std::string msg = "***Received Request from client, socket descriptor: [" + std::to_string(new_socket) + "]***"; 
-    log(msg.c_str());
+    //creating regex for checking mime types requested
+    std::regex regex("GET /([^ ]*) HTTP/1");
+    std::smatch matches;
+    std::string buff(buffer);
+    if (std::regex_search(buff, matches, regex))
+    {
+      std::string url = matches[1].str();
+      std::cout << "Found URL is: " << url << std::endl;
+    }
+
+    log(buffer);
     //log("***Received Request from client***");
     sendResponse(new_socket);
     close(new_socket);
@@ -137,6 +167,4 @@ namespace http
     std::string prompt = "***** Process termination, SIG : " + std::to_string(signum) + " sent, closing server.";
     exitWithError(prompt.c_str());
   }
-
-  
 }
