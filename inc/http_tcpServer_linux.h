@@ -12,18 +12,19 @@
 #include <string>
 #include <sstream>
 #include <regex>
+#include <unistd.h>
 //testing
-#include <string.h>
-#include <memory.h>
+#include "mime_types.h"
+#include <sys/stat.h>
 
 #define BUFFER_SIZE 120000
 
-void log(const char* msg);
-void exitWithError(const char* msg);
-char* url_decode(const char* src);
-std::string getFileExtension(std::string );
-
 namespace http {
+  void log(const char* msg);
+  void exitWithError(const char* msg);
+  std::string getFileExtension(const std::string& filename);
+  std::string getMimeType(const std::string& extension);
+
   class TcpServer
   {
     const char* m_ip_address;
@@ -35,9 +36,9 @@ namespace http {
     uint64_t m_socketAddress_len;
     std::string m_serverMessage;
 
-    uint8_t startServer();
-    void closeServer();
-    void fillSocketAddr();
+    uint8_t m_startServer();
+    void m_closeServer();
+    void m_fillSocketAddr();
   public:
     TcpServer(const char* ip, uint32_t port);
     ~TcpServer();
@@ -45,7 +46,8 @@ namespace http {
     void acceptConnection(int &new_socket);
     //response
     void sendResponse(int new_socket); 
-    std::string buildResponse();
+    //std::string buildResponse();
+    std::string buildResponse(const std::string& file_name, std::string& response, size_t response_len);
     //handlers
     void handleClient(int new_socket);
     static void signalHandler(int signum);
