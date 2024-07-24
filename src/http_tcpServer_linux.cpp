@@ -1,15 +1,14 @@
 #include "../inc/http_tcpServer_linux.h"
-#include "http_tcpServer_linux.h"
 
 namespace http
 {
 
-  void log(const char *msg)
+  void log(const std::string& msg)
   {
     std::cout << "[LOG] " << msg << "\n";
   }
 
-  void exitWithError(const char *msg)
+  void exitWithError(const std::string& msg)
   {
     std::cout << "[ERROR] " << msg << "\n";
     exit(1);
@@ -26,12 +25,12 @@ namespace http
       std::cout << "Mime type requested: " << mime_type[extension] << "\n";
       return mime_type[extension];
     }
-    return std::string();
+    return "text/html";
   }
 
   http::TcpServer::TcpServer(const char* ip, uint32_t port):m_ip_address(ip), m_port(port), 
     m_socket(), m_new_socket(), m_incomingMessage(), m_socketAddress(), m_socketAddress_len(sizeof(m_socketAddress)),
-    m_serverMessage(buildResponse())
+    m_serverMessage()
   {
     std::signal(SIGINT, signalHandler);
     m_startServer();
@@ -124,30 +123,44 @@ namespace http
       log("Error sending response to client, some bytes has been lost...");
   }
 
-  std::string TcpServer::buildResponse(const std::string &file_name, std::string &response, size_t response_len)
+  void TcpServer::buildResponse(const std::string &file_name)
   {
     //reading mime type of rrequest based on requested file_name
     std::string mime = getMimeType(file_name);
+    //handling requested file
+    std::fstream file;
+    if (file_name == "")
+      file.open("index.html", std::ios::in);
+    else 
+      file.open(file_name, std::ios::in); 
+
+    //building response
+    if (file.fail())
+    {
+      std::string msg = "Could not find requested file: " + file_name;
+      log(msg);
+      m_serverMessage = "HTTP/1.1 404 Not Found\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "\r\n"
+                        "404 Not Found";
+      return;
+    }
+    std::string file_content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
     std::stringstream ss;
     ss << "HTTP/1.1 200 OK\r\n"
-      "Content-Type: text/plain\r\n)"
-      "\r\n" << mime;
-    int file_fd = open(file_name.c_str(), O_RDONLY);
+      "Content-Type: " << mime << "\r\n"
+      << "Content-Length: " << file_content.size()
+      << "\r\n\r\n";
+    ss << file_content;
+    m_serverMessage = ss.str();
   }
-
-  // std::string TcpServer::buildResponse()
-  // {
-  //   std::string htmlFile = "<!DOCTYPE html><html lang=\"en\"><body><h1> HOME </h1><p> Hello from your Server :) </p><p><img src=\"images/fox.jpg\"></p></body></html>";
-  //   std::ostringstream ss;
-  //   ss << "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: " << htmlFile.size() << "\n\n"
-  //       << htmlFile;
-  //   return ss.str();
-  // }
 
   void TcpServer::handleClient(int new_socket)
   {
     char buffer[BUFFER_SIZE] = {0};
     int64_t bytesReceived = read(new_socket, buffer, BUFFER_SIZE);
+    log(std::string(buffer));
     if (bytesReceived < 0)
     {
       exitWithError("Failed to read bytes from client socket connection");
@@ -156,15 +169,14 @@ namespace http
     std::regex regex("GET /([^ ]*) HTTP/1");
     std::smatch matches;
     std::string buff(buffer);
+    std::string url;
     if (std::regex_search(buff, matches, regex))
     {
-      std::string url = matches[1].str();
+      url = matches[1].str();
       std::cout << "Found URL is: " << url << std::endl;
       getMimeType(url);
     }
-
-    log(buffer);
-    //log("***Received Request from client***");
+    buildResponse(url);
     sendResponse(new_socket);
     close(new_socket);
   }

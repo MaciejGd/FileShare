@@ -15,13 +15,13 @@
 #include <unistd.h>
 //testing
 #include "mime_types.h"
-#include <sys/stat.h>
+#include <fstream>
 
 #define BUFFER_SIZE 120000
 
 namespace http {
-  void log(const char* msg);
-  void exitWithError(const char* msg);
+  void log(const std::string& msg);
+  void exitWithError(const std::string& msg);
   std::string getFileExtension(const std::string& filename);
   std::string getMimeType(const std::string& extension);
 
@@ -34,6 +34,7 @@ namespace http {
     int64_t m_incomingMessage;
     struct sockaddr_in m_socketAddress;
     uint64_t m_socketAddress_len;
+    //server response on request
     std::string m_serverMessage;
 
     uint8_t m_startServer();
@@ -47,7 +48,7 @@ namespace http {
     //response
     void sendResponse(int new_socket); 
     //std::string buildResponse();
-    std::string buildResponse(const std::string& file_name, std::string& response, size_t response_len);
+    void buildResponse(const std::string& file_name);
     //handlers
     void handleClient(int new_socket);
     static void signalHandler(int signum);

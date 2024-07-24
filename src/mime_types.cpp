@@ -14,7 +14,7 @@ std::unordered_map<std::string, std::string> mime_type = {
   {"bz2", "applicaiton/x-bzip2"},
   {"cda", "application/x-cdf"},
   {"csh", "application/x-csh"},
-  {"css", "test/css"},
+  {"css", "text/css"},
   {"csv", "text/csv"},
   {"doc", "application/msword"},
   {"docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},

@@ -1,0 +1,13 @@
+
+#HEADER {
+  font-size:40px;
+  color:red;
+}
+
+#image_animate {
+  top:100px;
+  left:100px;
+  width:400px;
+  height:400px;
+  position:absolute;
+}
