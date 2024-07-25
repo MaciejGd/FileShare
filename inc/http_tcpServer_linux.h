@@ -45,9 +45,7 @@ namespace http {
     ~TcpServer();
     void startListen();
     void acceptConnection(int &new_socket);
-    //response
     void sendResponse(int new_socket); 
-    //std::string buildResponse();
     void buildResponse(const std::string& file_name);
     //handlers
     void handleClient(int new_socket);
