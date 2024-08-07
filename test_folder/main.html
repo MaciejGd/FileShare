@@ -16,12 +16,15 @@
             return res.json();
           })
           .then((data) => 
-            console.log(data))
+          {
+            console.log(data)
+            populateList(data);
+          })
           .catch((error) => 
             console.error("Unable to fetch data:", error));
         }
         fetchJSONData();
-        function populateList()
+        function populateList(data)
         {
           var list = document.getElementById("list");
           list.innerHTML = "";
@@ -31,17 +34,15 @@
             const link = document.createElement("a");
             //have to change it actually
             link.href = file.url;
-
+            link.textContent = file.name;
+            link.setAttribute('download','');
+            listItem.appendChild(link);
+            list.appendChild(listItem);
           })
           
         }
       </script>
 	  <ul id="list">
-		  <li><a href="./file1">pierwszy</a></li>
-		  <li><a href="./file1">pierwszy</a></li>
-		  <li><a href="./file1">pierwszy</a></li>
-		  <li><a href="./file1">pierwszy</a></li>
-		  <li><a href="./file1">pierwszy</a></li>
 	  </ul>
     </div>
   </body>
