@@ -8,10 +8,21 @@
 #ifdef _WIN32
 #define FILE_CREATE
 #elif __linux__
-#define FILE_CREATE "touch JSON"
+#define FILE_CREATE "touch " JSON_NAME
 #endif
 
 namespace fs = std::filesystem;
+
+std::string getFileName(const std::string& file_name)
+{
+  auto it = file_name.find_last_of('/');
+  if (it != std::string::npos)
+  {
+    return file_name.substr(it+1, file_name.length() - 1);
+  }
+  return file_name;
+}
+
 
 //examine download directory and retrieved links to files stored in 
 std::vector<std::string> prepareArgsJSON()
@@ -32,11 +43,6 @@ std::vector<std::string> prepareArgsJSON()
 
 void createJSON(const std::vector<std::string>& files)
 {
-  if (system(FILE_CREATE))
-  {
-    std::cout << "[ERROR]Could not create a JSON file containing downloads, quiting.\n";
-    exit(1);
-  }
   std::ofstream json_file(JSON_NAME);
   if (json_file.fail())
   {
@@ -47,7 +53,7 @@ void createJSON(const std::vector<std::string>& files)
   json_file << "\"options\" : [";
   for (int i = 0; i < files.size(); i++)
   {
-    json_file << "\"" << files[i] << "\"";
+    json_file << "{\"url\":\"" << files[i] << "\"," << "\"name\":\""<< getFileName(files[i]) << "\"}";
     if (i != files.size()-1)
       json_file << ", ";
   }

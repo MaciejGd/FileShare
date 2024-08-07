@@ -1,0 +1,48 @@
+<!DOCTYPE html >
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="./test_folder/main.css" type="text/css">
+    <script src="test_folder/main.js"></script>
+  </head>
+  <body>
+    <div>
+      <h1 id="title">FILES TO DOWNLOAD</h1>
+      <script>
+        function fetchJSONData() {
+          fetch("./.download.json").then((res) => {
+            if (!res.ok)
+              throw new Error (`HTTP error! Status: ${res.status}`);
+            return res.json();
+          })
+          .then((data) => 
+            console.log(data))
+          .catch((error) => 
+            console.error("Unable to fetch data:", error));
+        }
+        fetchJSONData();
+        function populateList()
+        {
+          var list = document.getElementById("list");
+          list.innerHTML = "";
+
+          data.files.forEach(file => {
+            const listItem = document.createElement("li");
+            const link = document.createElement("a");
+            //have to change it actually
+            link.href = file.url;
+
+          })
+          
+        }
+      </script>
+	  <ul id="list">
+		  <li><a href="./file1">pierwszy</a></li>
+		  <li><a href="./file1">pierwszy</a></li>
+		  <li><a href="./file1">pierwszy</a></li>
+		  <li><a href="./file1">pierwszy</a></li>
+		  <li><a href="./file1">pierwszy</a></li>
+	  </ul>
+    </div>
+  </body>
+</html>
