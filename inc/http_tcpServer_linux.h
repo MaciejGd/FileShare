@@ -34,14 +34,16 @@ namespace http {
     int64_t m_incomingMessage;
     struct sockaddr_in m_socketAddress;
     uint64_t m_socketAddress_len;
-    //server response on request
     std::string m_serverMessage;
+    std::string main_file;
+    std::string proj_dir;
 
+    void m_evaluateProjDir();
     uint8_t m_startServer();
     void m_closeServer();
     void m_fillSocketAddr();
   public:
-    TcpServer(const char* ip, uint32_t port);
+    TcpServer(const char* ip, uint32_t port, std::string main_file = "index.html");
     ~TcpServer();
     void startListen();
     void acceptConnection(int &new_socket);

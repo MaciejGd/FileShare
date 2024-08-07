@@ -1,16 +1,17 @@
-//main code for server
 #include "inc/http_tcpServer_linux.h"
 
-//socket system api
-// int socket(int domain, int type, int protocol);
-//domain AF_INET domain stands for TCP/IP protocol
-//type specifies the type of communication structure the socket will allow SOCK_STREAM for reliable full-duplex stream
-//protocol which will be responsible for supporting domain in case of AF_INET equal to 0
-
-int main(void)
+int main(int argc, const char** argv)
 {
-  //using namespace http;
-
-  http::TcpServer server = http::TcpServer("0.0.0.0", 8080);
+  if (argc == 1)
+  {
+    http::TcpServer server = http::TcpServer("0.0.0.0", 8080);
+  }
+  else if (argc == 2)
+  {
+    http::TcpServer server = http::TcpServer("0.0.0.0", 8080, std::string(argv[1]));
+  }
+  else {
+    std::cout << "Too much input arguments, terminating program execution...\n";
+  }
   return 0;
 }
