@@ -35,7 +35,11 @@
             //have to change it actually
             link.href = file.url;
             link.textContent = file.name;
-            link.setAttribute('download','');
+            if (file.dir == 0)
+              link.setAttribute('download','');
+            else {
+              link.textContent+="------------------> this is dir";
+            }
             listItem.appendChild(link);
             list.appendChild(listItem);
           })
