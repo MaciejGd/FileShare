@@ -20,12 +20,12 @@ void Dir_Entry::m_createFileName()
   file_name = file_path;
 }
 
-Dir_Entry::Dir_Entry(string file_path, bool is_dir):file_path(file_path),is_dir(is_dir)
+Dir_Entry::Dir_Entry(const string& file_path, bool is_dir):file_path(file_path),is_dir(is_dir)
 {
   m_createFileName();
 }
 
-JSON_PARSER::JSON_PARSER(string dir_path):dir_path(dir_path){
+JSON_PARSER::JSON_PARSER(string dir_path):dir_path(dir_path),head_dir(std::make_shared<Dir_Entry>(Dir_Entry{dir_path, true})){
   m_ParseDirs();
   m_CreateJSON();
 }
@@ -34,7 +34,7 @@ void JSON_PARSER::m_ParseDirs()
 {
   //create dirs queue and add starting dir into it
   std::queue<std::shared_ptr<Dir_Entry>> dirs_queue;
-  dirs_queue.push(std::make_shared<Dir_Entry>(Dir_Entry{dir_path, true}));
+  dirs_queue.push(head_dir);
   string temp_path;
   std::shared_ptr<Dir_Entry> temp_dir;
   bool is_dir = false;
@@ -55,12 +55,56 @@ void JSON_PARSER::m_ParseDirs()
         is_dir = true;
       else 
         is_dir = false;
-      dirs_queue.push(std::make_shared<Dir_Entry>(Dir_Entry{file_path, is_dir}));
+      std::shared_ptr<Dir_Entry> entry = std::make_shared<Dir_Entry>(Dir_Entry{file_path, is_dir});
+      temp_dir->addFile(entry);
+      dirs_queue.push(entry);
+
     }
   }
 } 
 
 void JSON_PARSER::m_CreateJSON()
 {
-
+  std::ostringstream ss;
+  int incantation = 2;
+  //add JSON header to a string stream 
+  ss << JSON_INIT;
+  m_CreateJSONRec(head_dir, ss, incantation, true);
+  ss << JSON_ENDING;
+  std::ofstream json_file("./.download.json");
+  if (json_file.fail())
+  {
+    std::cout << "[ERROR]Could not create json file...\n[ERROR]Quiting program execution...\n";
+  }
+  json_file << ss.str();
+  json_file.close();
 }
+
+void JSON_PARSER::m_CreateJSONRec(std::shared_ptr<Dir_Entry> head, std::ostringstream& ss, int incantation, bool is_first)
+{
+  string tabulation(incantation, '\t');
+  string path = head->getPath();
+  string name = head->getName();
+  if (!is_first)
+    ss << ",\n";
+  ss << tabulation << JSON_OBJECT_START(path, name, tabulation);
+  if (head->isDir())
+  {
+    ss << "\n";
+  }
+  for (size_t i = 0; i < head->contentSize(); i++)
+  {
+    if(i==0)
+    {
+      m_CreateJSONRec(head->getContent(i), ss, incantation+1,true);
+    }
+    else 
+      m_CreateJSONRec(head->getContent(i), ss, incantation+1);
+  }
+  if (head->isDir())
+    ss << tabulation;
+  ss << JSON_OBJECT_END;
+}
+
+
+
