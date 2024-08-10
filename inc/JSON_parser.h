@@ -12,8 +12,9 @@
 #define JSON_INIT "{\n\t\"files\" : [\n"
 #define JSON_ENDING "\n\t]\n}"
 #define JSON_END_LINE "}"
-#define JSON_OBJECT_START(url, name, tabulation) "{\n" << tabulation << "\"url\":\"" << url << "\",\n" << tabulation << "\"name\":\""  << name << "\",\n" << tabulation << "\"contents\":["
-#define JSON_OBJECT_END "]}"
+#define JSON_START_LINE "{\n"
+#define JSON_OBJECT_START(url, name, tabulation) tabulation << "\"url\":\"" << url << "\",\n" << tabulation << "\"name\":\""  << name << "\",\n" << tabulation << "\"contents\":["
+#define JSON_OBJECT_END(tabulation) "]\n" << tabulation << "}"
 
 using std::string, std::vector, std::cout;
 namespace fs = std::filesystem; 

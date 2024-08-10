@@ -87,7 +87,8 @@ void JSON_PARSER::m_CreateJSONRec(std::shared_ptr<Dir_Entry> head, std::ostrings
   string name = head->getName();
   if (!is_first)
     ss << ",\n";
-  ss << tabulation << JSON_OBJECT_START(path, name, tabulation);
+  ss << tabulation.substr(0, tabulation.length()-1) << JSON_START_LINE;
+  ss << JSON_OBJECT_START(path, name, tabulation);
   if (head->isDir())
   {
     ss << "\n";
@@ -102,8 +103,8 @@ void JSON_PARSER::m_CreateJSONRec(std::shared_ptr<Dir_Entry> head, std::ostrings
       m_CreateJSONRec(head->getContent(i), ss, incantation+1);
   }
   if (head->isDir())
-    ss << tabulation;
-  ss << JSON_OBJECT_END;
+    ss << "\n" << tabulation;
+  ss << JSON_OBJECT_END(tabulation.substr(0, tabulation.length()-1));
 }
 
 
