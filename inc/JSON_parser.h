@@ -13,7 +13,7 @@
 #define JSON_ENDING "\n\t]\n}"
 #define JSON_END_LINE "}"
 #define JSON_START_LINE "{\n"
-#define JSON_OBJECT_START(url, name, tabulation) tabulation << "\"url\":\"" << url << "\",\n" << tabulation << "\"name\":\""  << name << "\",\n" << tabulation << "\"contents\":["
+#define JSON_OBJECT_START(url, name, tabulation) tabulation << "\"url\":\"" << url << "\",\n" << tabulation << "\"name\":\""  << name << "\",\n" << tabulation << "\"files\":["
 #define JSON_OBJECT_END(tabulation) "]\n" << tabulation << "}"
 
 using std::string, std::vector, std::cout;
