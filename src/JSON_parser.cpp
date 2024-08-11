@@ -68,7 +68,6 @@ string JSON_PARSER::m_CreateFileName(string& url)
   {
 
     file_name = url.substr(it+1, file_len-1);
-    std::cout << "[INFO]File_name: " << file_name << "\n";
     return file_name;
   }  
   return url;
