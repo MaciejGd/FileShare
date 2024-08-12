@@ -31,47 +31,54 @@
 #define DEFAULT_PORT "8080"
 
 namespace http {
-  void log(const std::string& msg);
-  void exitWithError(const std::string& msg);
-  std::string getFileExtension(const std::string& filename);
-  std::string getMimeType(const std::string& extension);
 
-  class TcpServer
-  {
-    const char* m_ip_address;
-    uint32_t m_port;
-    int64_t m_incomingMessage;
-    #ifdef LINUX
-    int32_t m_socket;
-    int32_t m_new_socket;
-    struct sockaddr_in m_socketAddress;
-    #elif WIN
-    SOCKET m_listenSocket = INVALID_SOCKET;
-    SOCKET m_clientSocket = INVALID_SOCKET;
-    struct addrinfo *m_result = nullptr;
-    struct addrinfo m_hints;
-    #endif
-    uint64_t m_socketAddress_len;
-    std::string m_serverMessage;
-    std::string main_file;
-    std::string proj_dir;
 
-    void m_evaluateProjDir();
-    uint8_t m_startServer();
-    void m_closeServer(int error_code);
-    void m_fillSocketAddr();
-    void m_bind();
-  public:
-    TcpServer(const char* ip, uint32_t port, std::string main_file = "./test_folder/main.html");
-    ~TcpServer();
-    void startListen();
-    void acceptConnection(int &new_socket);
-    void sendResponse(int new_socket); 
-    void buildResponse(const std::string& file_name);
-    //handlers
-    void handleClient();
-    static void signalHandler(int signum);
-  };
+class TcpServer
+{
+  const char* m_ip_address;
+  uint32_t m_port;
+  int64_t m_incomingMessage;
+  uint64_t m_socketAddress_len;
+  std::string m_serverMessage;
+  std::string main_file;
+  std::string proj_dir;
+  #ifdef LINUX
+  int32_t m_socket;
+  int32_t m_new_socket;
+  struct sockaddr_in m_socketAddress;
+  #elif WIN
+  SOCKET m_listenSocket = INVALID_SOCKET;
+  SOCKET m_clientSocket = INVALID_SOCKET;
+  struct addrinfo *m_result = nullptr;
+  struct addrinfo m_hints;
+  #endif
+  //static instance of a class needed to handle signalling
+  static TcpServer* instance;
+
+  //helper functions
+  void m_log(const std::string& msg);
+  void m_exitWithError(const std::string& msg);
+  std::string m_getFileExtension(const std::string& filename);
+  std::string m_getMimeType(const std::string& extension);
+  void m_evaluateProjDir();
+  //
+  uint8_t m_startServer();
+  void m_closeServer();
+  void m_fillSocketAddr();
+  void m_bind();
+  void m_startListen();
+  void m_acceptConnection(int &new_socket);
+  void m_sendResponse(int new_socket); 
+  void m_buildResponse();
+  void m_buildResponse(const std::string& file_name);
+  //handlers
+  void m_handleClient();
+  static void m_signalHandler(int signum);
+public:
+  TcpServer(const char* ip, uint32_t port, std::string main_file = "./test_folder/main.html");
+  ~TcpServer();
+
+};
 } //namespace http
 #endif // INCLUDED_HTTP_TCPSERVER_LINUX
 

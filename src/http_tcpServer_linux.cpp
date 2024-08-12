@@ -1,20 +1,25 @@
 #include "../inc/http_tcpServer_linux.h"
+#include "../inc/web_page.h"
 
 namespace http
 {
+//static instance initialization
+TcpServer* TcpServer::instance = nullptr;
 //NOT TOUCH
-void log(const std::string& msg)
+void TcpServer::m_log(const std::string& msg)
 {
   std::cout << "[LOG] " << msg << "\n";
 }
 //NOT TOUCH
-void exitWithError(const std::string& msg)
+void TcpServer::m_exitWithError(const std::string& msg)
 {
   std::cout << "[ERROR] " << msg << "\n";
+  m_closeServer();
   exit(1);
+
 }
 //NOT TOUCH
-std::string getMimeType(const std::string &filename)
+std::string TcpServer::m_getMimeType(const std::string &filename)
 {
   size_t dot;
   std::string extension;
@@ -32,9 +37,10 @@ http::TcpServer::TcpServer(const char* ip, uint32_t port, std::string file_name)
   m_incomingMessage(), main_file(file_name), m_socketAddress_len(sizeof(m_socketAddress)),
   m_serverMessage()
 {
+  instance = this;
   //handling CTRL-C and CTRL-Z signals
-  std::signal(SIGINT, signalHandler);
-  std::signal(SIGTSTP, signalHandler);
+  std::signal(SIGINT, m_signalHandler);
+  std::signal(SIGTSTP, m_signalHandler);
 
   #ifdef WIN
   #endif
@@ -45,19 +51,19 @@ http::TcpServer::TcpServer(const char* ip, uint32_t port, std::string file_name)
   #ifdef LINUX
   int opt = 1;
   if (setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-    exitWithError("Failed to set SO_REUSEADDR.");
+    m_exitWithError("Failed to set SO_REUSEADDR.");
   }
   #endif
 
   m_bind();
 
   
-  startListen();
+  m_startListen();
 }
 
 http::TcpServer::~TcpServer()
 {
-  m_closeServer(0);
+  m_closeServer();
 }
 
 //NOT TOUCH
@@ -82,7 +88,7 @@ uint8_t TcpServer::m_startServer()
   if (m_socket < 0)
   {
     close(m_socket);
-    exitWithError("Opening a server's socket failed... shutting down");
+    m_exitWithError("Opening a server's socket failed... shutting down");
   }
   std::cout << "Properly opened server's socket, the socket file descriptor: " << m_socket << "\n";
   return 0;
@@ -99,12 +105,11 @@ uint8_t TcpServer::m_startServer()
   #endif
 }
 
-void TcpServer::m_closeServer(int error_code)
+void TcpServer::m_closeServer()
 {
   #ifdef LINUX
   close(m_socket);
   close(m_new_socket);
-  exit(error_code);
   #elif WIN
   closesocket(m_listenSocket);
   WSACleanup();
@@ -125,7 +130,6 @@ void TcpServer::m_fillSocketAddr()
   m_hints.ai_flags = AI_PASSIVE;
   int iResult = getaddrinfo(NULL, DEFAULT_PORT, &m_hints, &m_result);
   if (iResult != 0) {
-    WSACleanup();
     exitWithError("getaddrinfo failed: %d\n", iResult);
   }
   #endif
@@ -137,53 +141,46 @@ void TcpServer::m_bind()
   if (bind(m_socket, (sockaddr*)&m_socketAddress, sizeof(m_socketAddress)) < 0)
   {
     close(m_socket);
-    exitWithError("Failed to assign socket address to created socket.");
+    m_exitWithError("Failed to assign socket address to created socket.");
   }
   #elif WIN
   int iResult = bind(m_listenSocket, m_result->ai.addr, (int)result->ai_addrlen);
   if (iResult == SOCKET_ERROR) {
     freeaddrinfo(result);
-    closesocket(m_listenSocket);
-    WSACleanup();
     exitWithError("bind failed with error: %d\n", WSAGetLastError());
   }
   freeaddrinfo(result);
   #endif
 }
 
-void TcpServer::startListen()
+void TcpServer::m_startListen()
 {
   #ifdef LINUX
   if (listen(m_socket, SOMAXCONN) < 0)
   {
-    exitWithError("Socket listen failed");
+    m_exitWithError("Socket listen failed");
   }
   #elif WIN
   if ( listen( m_listenSocket, SOMAXCONN ) == SOCKET_ERROR ) {
-    printf( "Listen failed with error: %ld\n", WSAGetLastError() );
-    closesocket(m_listenSocket);
-    WSACleanup();
-    return 1;
+    m_exitWithError( "Listen failed with error: %ld\n", WSAGetLastError() );
   }
   #endif
   std::string ss;
   ss = "\n*** Listening on ADDRESS: " + std::string(m_ip_address) + " PORT: " + std::to_string(ntohs(m_socketAddress.sin_port)) + " ***\n"; 
-  log(ss.c_str());
+  m_log(ss.c_str());
 
   while (true)
   {
-    log("Waiting for a new connection...\n");
+    m_log("Waiting for a new connection...\n");
     #ifdef LINUX
-    acceptConnection(m_new_socket);
+    m_acceptConnection(m_new_socket);
 
-    std::thread clientThread(&TcpServer::handleClient, this);
+    std::thread clientThread(&TcpServer::m_handleClient, this);
     #elif WIN
     m_clientSocket = accept(m_listenSocket, NULL, NULL);
     //actually here I am not sure i want to quit
     if (m_clientSocket == INVALID_SOCKET) {
-      closesocket(m_listenSocket);
-      WSACleanup();
-      std::cout << "accept failed: " << WSAGetLastError() << "\n";
+      m_exitWithError("accept failed: " + std::to_string(WSAGetLastError()) + "\n");
     }
     //need to change that
     std::thread clientThread(&TcpServer::handleClient, this, m_new_socket);
@@ -192,7 +189,7 @@ void TcpServer::startListen()
   } 
 }
 
-void TcpServer::acceptConnection(int &new_socket)
+void TcpServer::m_acceptConnection(int &new_socket)
 {
   new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
   if (new_socket < 0)
@@ -200,12 +197,12 @@ void TcpServer::acceptConnection(int &new_socket)
     std::string addr = inet_ntoa(m_socketAddress.sin_addr);
     std::string info = "Server failed to accept incoming connection from ADDRESS: " + addr + "; PORT: " + 
         std::to_string(ntohs(m_socketAddress.sin_port));
-    exitWithError(info.c_str());
+    m_exitWithError(info.c_str());
   }
 }
 
 //have to check it more a little
-void TcpServer::handleClient()
+void TcpServer::m_handleClient()
 {
   int new_socket = m_new_socket;
   char buffer[BUFFER_SIZE] = {0};
@@ -215,10 +212,10 @@ void TcpServer::handleClient()
   #elif WIN
   bytesReceived = recv(m_clientSocket, buffer, BUFFER_SIZE, 0);
   #endif
-  log(std::string(buffer));
+  m_log(std::string(buffer));
   if (bytesReceived < 0)
   {
-    exitWithError("Failed to read bytes from client socket connection");
+    m_exitWithError("Failed to read bytes from client socket connection");
   }
   //creating regex for checking mime types requested
   std::regex regex("GET /([^ ]*) HTTP/1");
@@ -228,49 +225,70 @@ void TcpServer::handleClient()
   if (std::regex_search(buff, matches, regex))
   {
     url = matches[1].str();
-    std::cout << "Found URL is: " << url << std::endl;
-    getMimeType(url);
+    std::cout << "Requested MIME type is: " << url << std::endl;
+    m_getMimeType(url);
   }
-  buildResponse(url);
-  sendResponse(new_socket);
+  //m_buildResponse(url);
+  m_buildResponse(url);
+  m_sendResponse(new_socket);
   close(new_socket);
 }
 
 //NOT TOUCH
-void TcpServer::buildResponse(const std::string &file_name)
+
+void TcpServer::m_buildResponse()
+{
+  m_serverMessage = webpage;
+}
+
+void TcpServer::m_buildResponse(const std::string &file_name)
 {
   //reading mime type of rrequest based on requested file_name
-  std::string mime = getMimeType(file_name);
+  std::string mime = m_getMimeType(file_name);
   //handling requested file
   std::fstream file;
   if (file_name == "")
-    file.open(main_file, std::ios::in);
-  else 
+  {
+    // file.open(main_file, std::ios::in);
+    // //m_serverMessage = std::string(webpage);
+    // return;  
+  }
+  else
+  {
     file.open(proj_dir + file_name, std::ios::in); 
 
   //building response
-  if (file.fail())
-  {
-    std::string msg = "Could not find requested file: " + proj_dir + file_name;
-    log(msg);
-    m_serverMessage = "HTTP/1.1 404 Not Found\r\n"
-                      "Content-Type: text/plain\r\n"
-                      "\r\n"
-                      "404 Not Found";
+    if (file.fail())
+    {
+      std::string msg = "Could not find requested file: " + proj_dir + file_name;
+      m_log(msg);
+      m_serverMessage = "HTTP/1.1 404 Not Found\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "\r\n"
+                        "404 Not Found";
+      return;
+    }
+    std::string file_content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
+    std::stringstream ss;
+    ss << "HTTP/1.1 200 OK\r\n"
+      "Content-Type: " << mime << "\r\n"
+      << "Content-Length: " << file_content.size()
+      << "\r\n\r\n";
+    ss << file_content;
+    m_serverMessage = ss.str();
     return;
   }
-  std::string file_content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-  file.close();
   std::stringstream ss;
   ss << "HTTP/1.1 200 OK\r\n"
     "Content-Type: " << mime << "\r\n"
-    << "Content-Length: " << file_content.size()
+    << "Content-Length: " << webpage.size()
     << "\r\n\r\n";
-  ss << file_content;
+  ss << webpage;
   m_serverMessage = ss.str();
 }
 
-void TcpServer::sendResponse(int new_socket)
+void TcpServer::m_sendResponse(int new_socket)
 {
   int64_t bytesSent;
   #ifdef LINUX
@@ -279,14 +297,14 @@ void TcpServer::sendResponse(int new_socket)
   bytesSent = send(m_clientSocket, m_serverMessage.c_str(), m_serverMessage.size(), 0);
   #endif
   if (bytesSent == m_serverMessage.size())
-    log("--- Server response sent to client ---\n*********************\n");
+    m_log("--- Server response sent to client ---\n*********************\n");
   else 
-    log("Error sending response to client, some bytes has been lost...");
+    m_log("Error sending response to client, some bytes has been lost...");
 }
 
 //NOT TOUCH
 //it is actually not used at all for now (used socket options for using unused)
-void TcpServer::signalHandler(int signum)
+void TcpServer::m_signalHandler(int signum)
 {
   std::string prompt = "***** Process termination, SIG : " + std::to_string(signum) + " sent, closing server.";
   //remove json file as it is no longer needed after closing server
@@ -295,7 +313,9 @@ void TcpServer::signalHandler(int signum)
   #elif _WIN32 || _WIN64
   system("del ./.download.json");
   #endif
-  exitWithError(prompt.c_str());
+  instance->m_exitWithError(prompt.c_str());
 }
+
+
 
 }//namespace http
