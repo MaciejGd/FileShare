@@ -191,6 +191,7 @@ void TcpServer::m_startListen()
 
 void TcpServer::m_acceptConnection(int &new_socket)
 {
+  std::cout << "[INFO]Accepting incoming socket connetion.\n";
   new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
   if (new_socket < 0)
   {
@@ -238,25 +239,27 @@ void TcpServer::m_handleClient()
 
 void TcpServer::m_buildResponse()
 {
-  m_serverMessage = webpage;
+  m_serverMessage = HTML::webpage;
 }
 
 void TcpServer::m_buildResponse(const std::string &file_name)
 {
   //reading mime type of rrequest based on requested file_name
   std::string mime = m_getMimeType(file_name);
+  std::string file_content;
   //handling requested file
   std::fstream file;
-  if (file_name == "")
+  if (file_name == "" && main_file == "")
   {
-    // file.open(main_file, std::ios::in);
-    // //m_serverMessage = std::string(webpage);
-    // return;  
+    file_content = HTML:: webpage;
+
   }
   else
   {
-    file.open(proj_dir + file_name, std::ios::in); 
-
+    if (file_name != "")
+      file.open(proj_dir + file_name, std::ios::in); 
+    else 
+      file.open(main_file, std::ios::in);
   //building response
     if (file.fail())
     {
@@ -268,23 +271,16 @@ void TcpServer::m_buildResponse(const std::string &file_name)
                         "404 Not Found";
       return;
     }
-    std::string file_content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    
+    file_content = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     file.close();
-    std::stringstream ss;
-    ss << "HTTP/1.1 200 OK\r\n"
-      "Content-Type: " << mime << "\r\n"
-      << "Content-Length: " << file_content.size()
-      << "\r\n\r\n";
-    ss << file_content;
-    m_serverMessage = ss.str();
-    return;
   }
   std::stringstream ss;
   ss << "HTTP/1.1 200 OK\r\n"
     "Content-Type: " << mime << "\r\n"
-    << "Content-Length: " << webpage.size()
+    << "Content-Length: " << file_content.size()
     << "\r\n\r\n";
-  ss << webpage;
+  ss << file_content;
   m_serverMessage = ss.str();
 }
 

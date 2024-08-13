@@ -4,13 +4,33 @@
     <meta charset="UTF-8">
     <style>
       body {
-        background-color: black;
-        color : white;
+        background-color: #4ca6ef
+;
+        color : #2139d1;
         margin-left: 5%;
+        margin-right: 5%;
         font-family: Arial, Helvetica, sans-serif;
       }
+      #list {
+        color: #2139d1;
+        font-size: 1.2em;
+        align-items: center;
+        justify-content: space-between;
+      }
+      ul li {
+        background: #cce5ff;
+        color: darkblue;
+        padding: 5px;
+        display: flex;
+      }
       a {
-        color: white;
+        flex-grow : 1;
+        text-align: left;
+      }
+      #buttonID {
+        color : darkblue;
+        background-color: #4ca6ef;
+        font-size: 0.8em; /* Adjust the size of the download symbol */
       }
     </style>
   </head>
@@ -40,24 +60,24 @@
   
         function populateList(data) {
           var list = document.getElementById("list");
-          list.innerHTML = ""; // Clear the list
+          list.innerHTML = "";
 
           data.files.forEach(file => {
               const listItem = document.createElement("li");
               const link = document.createElement("a");
 
-              if (file.files && file.files.length !== 0) {
-                // For directories
+              if (file.files && file.files.length !== 0) {              
                 link.href = "#";
                 link.textContent = file.name + " (Directory)";
+                link.style.color = '#071a8f';
                 link.addEventListener('click', (event) => {
                     event.preventDefault();
-                    // Open the directory
                     previous_node.push(data);
                     populateList(file);
                 });
                 const downloadAllButton = document.createElement("button");
-                downloadAllButton.textContent = "Download directory";
+                downloadAllButton.id = 'buttonID';
+                downloadAllButton.textContent = "⬇";
                 downloadAllButton.addEventListener('click', (event)=> {
                   event.stopPropagation();
                   downloadAllFiles(file);
@@ -65,7 +85,6 @@
                 listItem.appendChild(link);
                 listItem.appendChild(downloadAllButton);
               } else {
-                  // For files
                   link.href = file.url;
                   link.textContent = file.name;
                   link.setAttribute('download', '');

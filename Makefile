@@ -9,7 +9,7 @@ EXE=server
 all: $(EXE)
 
 $(EXE): $(OBJ) $(OBJECT_DIR)/main.o
-	$(CC) $^ $(FLAGS) $@
+	@$(CC) $^ $(FLAGS) $@
 	@echo "Build done successfully"
 
 $(OBJECT_DIR)/main.o: main.cpp $(DEPS) | $(OBJECT_DIR)
@@ -20,10 +20,12 @@ $(OBJECT_DIR)/%.o: src/%.cpp $(DEPS) | $(OBJECT_DIR)
 	@echo "Object file $@ created"
 
 $(OBJECT_DIR):
-	mkdir -p $(OBJECT_DIR)
+	@mkdir -p $(OBJECT_DIR)
+	@echo "Created 'obj' directory"
 
 .PHONY: clean
 
 clean: 
-	rm -rf $(OBJECT_DIR)/*.o $(EXE)
+	@rm -rf -r $(OBJECT_DIR)
+
 

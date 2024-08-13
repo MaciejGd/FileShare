@@ -75,7 +75,7 @@ class TcpServer
   void m_handleClient();
   static void m_signalHandler(int signum);
 public:
-  TcpServer(const char* ip, uint32_t port, std::string main_file = "./test_folder/main.html");
+  TcpServer(const char* ip, uint32_t port, std::string main_file = "");
   ~TcpServer();
 
 };

@@ -40,7 +40,10 @@ int main(int argc, const char** argv)
   for (int i = 1; i < argc; i++)
     inputAnalyze(argv[i]);
   JSON_PARSER parser("./download/");
-  http::TcpServer server = http::TcpServer("0.0.0.0", 8080);
+  if (argc == 2)
+    http::TcpServer server = http::TcpServer("0.0.0.0", 8080, std::string(argv[1]));
+  else 
+    http::TcpServer server = http::TcpServer("0.0.0.0", 8080);
   system("rm -f ./download.json");
   return 0;
 }

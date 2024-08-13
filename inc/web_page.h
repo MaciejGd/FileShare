@@ -2,10 +2,24 @@
 #include <string>
 
 //webpage embedded into a cpp code
+namespace HTML
+{
+
 std::string webpage = "<!DOCTYPE html >\n"
 "<html>\n"
 "  <head>\n"
 "    <meta charset=\"UTF-8\">\n"
+"    <style>\n"
+"      body {\n"
+        "background-color: #718a89;\n"
+        "color : #3d4394;\n"
+        "margin-left: 5%;\n"
+        "font-family: Arial, Helvetica, sans-serif;\n"
+"      }\n"
+"      a {\n"
+        "color: #3d4394;\n"
+"      }\n"
+"    </style>\n"
 "  </head>\n"
 "  <body>\n"
 "    <div>\n"
@@ -111,3 +125,4 @@ std::string webpage = "<!DOCTYPE html >\n"
 "  </body>\n"
 "</html>\n"
 ;
+}
