@@ -38,10 +38,18 @@ void JSON_PARSER::m_CreateJSONRec(std::string& head_url, std::ostringstream& ss,
   }
   ss << "\n";
   int counter = 0;
-  //recursively process directory entries
+  //retrieve files urls
+  std::vector<std::string> entries;
   for (auto& file : fs::directory_iterator(head_url))
   {
+    entries.push_back(file.path());
     string child_url = file.path();
+    
+  }
+  //recursively process directory entries in sorted order
+  std::sort(entries.begin(), entries.end());
+  for (auto& child_url : entries)
+  {
     if(counter==0)
     {
       m_CreateJSONRec(child_url, ss, incantation+1,true);

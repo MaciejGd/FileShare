@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 //JSON  creating macros
 #define JSON_INIT "{\n\t\"files\" : [\n"
 #define JSON_ENDING "\n\t]\n}"
