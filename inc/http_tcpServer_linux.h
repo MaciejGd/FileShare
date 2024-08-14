@@ -10,6 +10,7 @@
 #include <sstream>
 #include <regex>
 #include <unistd.h>
+#include <filesystem>
 //testing
 #include "mime_types.h"
 #include <fstream>
@@ -30,8 +31,9 @@
 #define BUFFER_SIZE 120000
 #define DEFAULT_PORT "8080"
 
-namespace http {
+namespace fs = std::filesystem;
 
+namespace http {
 
 class TcpServer
 {
@@ -55,6 +57,8 @@ class TcpServer
   //static instance of a class needed to handle signalling
   static TcpServer* instance;
 
+  std::vector<std::string> zipped_dirs;
+
   //helper functions
   void m_log(const std::string& msg);
   void m_exitWithError(const std::string& msg);
@@ -73,6 +77,7 @@ class TcpServer
   void m_buildResponse(const std::string& file_name);
   //handlers
   void m_handleClient();
+  void m_handleDirDownload(const std::string& url);
   static void m_signalHandler(int signum);
 public:
   TcpServer(const char* ip, uint32_t port, std::string main_file = "");

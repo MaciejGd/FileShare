@@ -219,10 +219,20 @@ void TcpServer::m_handleClient()
     m_exitWithError("Failed to read bytes from client socket connection");
   }
   //creating regex for checking mime types requested
-  std::regex regex("GET /([^ ]*) HTTP/1");
+  std::regex regex;
   std::smatch matches;
   std::string buff(buffer);
   std::string url;
+  //handle POST request
+  if (buff.find("POST") != std::string::npos)
+  {
+    regex = std::regex("\"directory\"\\s*:\\s*\"(.*?)\"");
+    m_handleDirDownload(buff);
+    m_sendResponse(new_socket);
+    close(new_socket);
+    return;
+  }
+  regex = std::regex("GET /([^ ]*) HTTP/1");
   if (std::regex_search(buff, matches, regex))
   {
     url = matches[1].str();
@@ -233,6 +243,49 @@ void TcpServer::m_handleClient()
   m_buildResponse(url);
   m_sendResponse(new_socket);
   close(new_socket);
+}
+
+
+void TcpServer::m_handleDirDownload(const std::string& buff)
+{
+  std::regex regex("\"directory\"\\s*:\\s*\"(.*?)\"");
+  std::smatch matches;
+  std::string url;
+  //match pattern to get url
+  if (std::regex_search(buff, matches, regex))
+  {
+    url = matches[1].str();
+    std::cout << "Requested url found in request is: " << url << std::endl;
+  }
+  std::string response;
+  //created zip name
+  std::string zip_archive = url + ".zip";
+  //check if zip does not exist and create it
+  if (!fs::exists(zip_archive)) 
+  {
+    std::string command = "zip -r " + url + " " + url;
+    if (system(command.c_str()))
+    {
+      m_log("Failed to create zip from " + url);
+      return;
+    }
+  }
+  //open zip archive
+  std::fstream file(zip_archive, std::ios::in);
+  if (file.fail())
+  {
+    m_log("Failed to open zip for read, zip name: " + zip_archive);
+  }
+  //copy zip content to string variable
+  std::string file_content = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+  file.close();
+  std::ostringstream ss;
+  ss << "HTTP/1.1 200 OK\r\n"
+    "Content-Type: application/zip\r\n"
+    << "Content-Length: " << file_content.size()
+    << "\r\n\r\n";
+  ss << file_content;
+  m_serverMessage = ss.str();
 }
 
 //NOT TOUCH

@@ -80,7 +80,8 @@
                 downloadAllButton.textContent = "⬇";
                 downloadAllButton.addEventListener('click', (event)=> {
                   event.stopPropagation();
-                  downloadAllFiles(file);
+                  //downloadAllFiles(file);
+                  downloadAll(file.url);
                 });
                 listItem.appendChild(link);
                 listItem.appendChild(downloadAllButton);
@@ -102,6 +103,54 @@
             populateList(last_node);
           }
         }
+        function downloadAll(dir_url)
+        {
+          console.log('Dir url is: ', dir_url);
+          fetch('/downloadAll', {
+            method: 'POST',
+            headers: {
+              'Content-Type' : 'application/json'
+            },
+            body : JSON.stringify({
+              directory: dir_url
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            const fileUrl = data.fileUrl;
+            //poll server until file is ready
+            checkFileAvailable(fileUrl);
+          })
+          .catch(error => console.error('Error initializing file creation: ', error));
+
+        }
+        //waiting for dir to compress
+        function checkFileAvailable(fileUrl)
+        {
+          fetch(fileUrl, {
+            method: 'HEAD'
+          })
+          .then(response => {
+            if (response.ok)
+              downloadFile(fileUrl + ".zip")
+            else 
+              setTimeout(() => checkFileAvailable(fileUrl), 2000);
+          })
+          .catch(error => console.error('Error in avialability check'));
+        }
+
+        function downloadFile(url)
+        {
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = '';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+
+        //the problem lays in here
         function downloadAllFiles(directory){
           const fileUrls = [];
 
@@ -115,10 +164,10 @@
               fileUrls.push(file.url);
             }
           }
-
           collectFileUrls(directory);
 
           fileUrls.forEach((url) => {
+            console.log("downloaded url: " + url);
             const link = document.createElement('a');
             link.href = url;
             link.download = '';
