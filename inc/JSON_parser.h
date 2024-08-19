@@ -17,14 +17,13 @@
 #define JSON_OBJECT_START(url, name, tabulation) tabulation << "\"url\":\"" << url << "\",\n" << tabulation << "\"name\":\""  << name << "\",\n" << tabulation << "\"files\":["
 #define JSON_OBJECT_END(tabulation) "]\n" << tabulation << "}"
 
-using std::string, std::vector, std::cout;
 namespace fs = std::filesystem; 
 
 class JSON_PARSER {
-  string dir_path;
+  std::string dir_path;
   void m_CreateJSON();
-  void m_CreateJSONRec(string& head, std::ostringstream& ss, int incantation, bool is_first = false);
-  string m_CreateFileName(string& url);
+  void m_CreateJSONRec(std::string& head, std::ostringstream& ss, int incantation, bool is_first = false);
+  std::string m_CreateFileName(std::string& url);
 public:
-  JSON_PARSER(string dir_path);
+  JSON_PARSER(std::string dir_path);
 };

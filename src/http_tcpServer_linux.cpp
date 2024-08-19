@@ -34,16 +34,13 @@ std::string TcpServer::m_getMimeType(const std::string &filename)
 }
 
 http::TcpServer::TcpServer(const char* ip, uint32_t port, std::string file_name):m_ip_address(ip), m_port(port), 
-  m_incomingMessage(), main_file(file_name), m_socketAddress_len(sizeof(m_socketAddress)),
-  m_serverMessage()
+  m_incomingMessage(), main_file(file_name), m_serverMessage()
 {
   instance = this;
   //handling CTRL-C and CTRL-Z signals
   std::signal(SIGINT, m_signalHandler);
-  std::signal(SIGTSTP, m_signalHandler);
+  //std::signal(SIGTSTP, m_signalHandler);
 
-  #ifdef WIN
-  #endif
   //init windows members
   m_fillSocketAddr();
   m_startServer();
@@ -93,13 +90,13 @@ uint8_t TcpServer::m_startServer()
   std::cout << "Properly opened server's socket, the socket file descriptor: " << m_socket << "\n";
   return 0;
   //windows implementation
-  #elif WIN
-  m_listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+  #elif defined(WIN)
+  m_listenSocket = socket(m_result->ai_family, m_result->ai_socktype, m_result->ai_protocol);
   if (m_listenSocket == INVALID_SOCKET)
   {
-    freeaddrinfo(result);
+    freeaddrinfo(m_result);
     WSACleanup();
-    exitWithError("Error at socket(): %s", WSAGetLastError());
+    m_exitWithError("Error at socket() " + std::to_string(WSAGetLastError()) + "\n");
   }
   return 0;
   #endif
@@ -110,7 +107,7 @@ void TcpServer::m_closeServer()
   #ifdef LINUX
   close(m_socket);
   close(m_new_socket);
-  #elif WIN
+  #elif defined(WIN)
   closesocket(m_listenSocket);
   WSACleanup();
   #endif
@@ -119,10 +116,11 @@ void TcpServer::m_closeServer()
 void TcpServer::m_fillSocketAddr()
 {
   #ifdef LINUX
+  m_socketAddress_len = sizeof(m_socketAddress);
   m_socketAddress.sin_family = AF_INET;
   m_socketAddress.sin_port = htons(m_port);
   m_socketAddress.sin_addr.s_addr = inet_addr(m_ip_address);
-  #elif WIN
+  #elif defined(WIN)
   ZeroMemory(&m_hints, sizeof(m_hints));
   m_hints.ai_family = AF_INET;
   m_hints.ai_socktype = SOCK_STREAM;
@@ -130,7 +128,7 @@ void TcpServer::m_fillSocketAddr()
   m_hints.ai_flags = AI_PASSIVE;
   int iResult = getaddrinfo(NULL, DEFAULT_PORT, &m_hints, &m_result);
   if (iResult != 0) {
-    exitWithError("getaddrinfo failed: %d\n", iResult);
+    m_exitWithError("getaddrinfo failed: " + std::to_string(iResult) + "\n");
   }
   #endif
 }
@@ -143,30 +141,34 @@ void TcpServer::m_bind()
     close(m_socket);
     m_exitWithError("Failed to assign socket address to created socket.");
   }
-  #elif WIN
-  int iResult = bind(m_listenSocket, m_result->ai.addr, (int)result->ai_addrlen);
+  #elif defined(WIN)
+  int iResult = bind(m_listenSocket, m_result->ai_addr, (int)m_result->ai_addrlen);
   if (iResult == SOCKET_ERROR) {
-    freeaddrinfo(result);
-    exitWithError("bind failed with error: %d\n", WSAGetLastError());
+    freeaddrinfo(m_result);
+    m_exitWithError("bind failed with error: " + std::to_string(WSAGetLastError()) + "\n");
   }
-  freeaddrinfo(result);
+  freeaddrinfo(m_result);
   #endif
 }
 
 void TcpServer::m_startListen()
 {
+  std::string ss;
   #ifdef LINUX
   if (listen(m_socket, SOMAXCONN) < 0)
   {
     m_exitWithError("Socket listen failed");
   }
-  #elif WIN
-  if ( listen( m_listenSocket, SOMAXCONN ) == SOCKET_ERROR ) {
-    m_exitWithError( "Listen failed with error: %ld\n", WSAGetLastError() );
-  }
-  #endif
-  std::string ss;
   ss = "\n*** Listening on ADDRESS: " + std::string(m_ip_address) + " PORT: " + std::to_string(ntohs(m_socketAddress.sin_port)) + " ***\n"; 
+  #elif defined(WIN)
+  if ( listen( m_listenSocket, SOMAXCONN ) == SOCKET_ERROR ) {
+    m_exitWithError( "Listen failed with error: " + std::to_string(WSAGetLastError()) + "\n");
+  }
+  ss = "\n*** Listening on ADDRESS: " + std::string(m_ip_address) + " PORT: " + std::to_string(ntohs(m_result->ai_addr->sa_family)) + " ***\n"; 
+  #endif
+  
+  
+  
   m_log(ss.c_str());
 
   while (true)
@@ -176,14 +178,14 @@ void TcpServer::m_startListen()
     m_acceptConnection(m_new_socket);
 
     std::thread clientThread(&TcpServer::m_handleClient, this);
-    #elif WIN
+    #elif defined(WIN)
     m_clientSocket = accept(m_listenSocket, NULL, NULL);
     //actually here I am not sure i want to quit
     if (m_clientSocket == INVALID_SOCKET) {
       m_exitWithError("accept failed: " + std::to_string(WSAGetLastError()) + "\n");
     }
     //need to change that
-    std::thread clientThread(&TcpServer::handleClient, this, m_new_socket);
+    std::thread clientThread(&TcpServer::m_handleClient, this);
     #endif
     clientThread.detach();
   } 
@@ -191,6 +193,7 @@ void TcpServer::m_startListen()
 
 void TcpServer::m_acceptConnection(int &new_socket)
 {
+  #ifdef LINUX
   std::cout << "[INFO]Accepting incoming socket connetion.\n";
   new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
   if (new_socket < 0)
@@ -200,18 +203,23 @@ void TcpServer::m_acceptConnection(int &new_socket)
         std::to_string(ntohs(m_socketAddress.sin_port));
     m_exitWithError(info.c_str());
   }
+  #endif
 }
 
 //have to check it more a little
 void TcpServer::m_handleClient()
 {
+  #ifdef LINUX
   int new_socket = m_new_socket;
+  #elif defined(WIN)
+  SOCKET new_socket = m_clientSocket;
+  #endif
   char buffer[BUFFER_SIZE] = {0};
   int64_t bytesReceived = 0;
   #ifdef LINUX
   bytesReceived = read(new_socket, buffer, BUFFER_SIZE);
-  #elif WIN
-  bytesReceived = recv(m_clientSocket, buffer, BUFFER_SIZE, 0);
+  #elif defined(WIN)
+  bytesReceived = recv(new_socket, buffer, BUFFER_SIZE, 0);
   #endif
   m_log(std::string(buffer));
   if (bytesReceived < 0)
@@ -342,7 +350,7 @@ void TcpServer::m_sendResponse(int new_socket)
   int64_t bytesSent;
   #ifdef LINUX
   bytesSent = write(new_socket, m_serverMessage.c_str(), m_serverMessage.size());
-  #elif WIN
+  #elif defined(WIN)
   bytesSent = send(m_clientSocket, m_serverMessage.c_str(), m_serverMessage.size(), 0);
   #endif
   if (bytesSent == m_serverMessage.size())

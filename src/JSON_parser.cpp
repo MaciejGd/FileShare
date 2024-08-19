@@ -1,6 +1,6 @@
 #include "../inc/JSON_parser.h"
 
-JSON_PARSER::JSON_PARSER(string dir_path):dir_path(dir_path){
+JSON_PARSER::JSON_PARSER(std::string dir_path):dir_path(dir_path){
   m_CreateJSON();
 }
 
@@ -23,8 +23,8 @@ void JSON_PARSER::m_CreateJSON()
 
 void JSON_PARSER::m_CreateJSONRec(std::string& head_url, std::ostringstream& ss, int incantation, bool is_first)
 {
-  string tabulation(incantation, '\t');
-  string name = m_CreateFileName(head_url);
+  std::string tabulation(incantation, '\t');
+  std::string name = m_CreateFileName(head_url);
   if (!is_first)
     ss << ",\n";
   ss << tabulation.substr(0, tabulation.length()-1) << JSON_START_LINE;
@@ -42,8 +42,8 @@ void JSON_PARSER::m_CreateJSONRec(std::string& head_url, std::ostringstream& ss,
   std::vector<std::string> entries;
   for (auto& file : fs::directory_iterator(head_url))
   {
-    entries.push_back(file.path());
-    string child_url = file.path();
+    entries.push_back(file.path().string());
+    std::string child_url = file.path().string();
     
   }
   //recursively process directory entries in sorted order
@@ -62,17 +62,17 @@ void JSON_PARSER::m_CreateJSONRec(std::string& head_url, std::ostringstream& ss,
   ss << JSON_OBJECT_END(tabulation.substr(0, tabulation.length()-1));
 }
 
-string JSON_PARSER::m_CreateFileName(string& url)
+std::string JSON_PARSER::m_CreateFileName(std::string& url)
 {
   size_t file_len = url.length();
-  string file_name;
+  std::string file_name;
   if (url[file_len-1] == '/')
   {
     url = url.substr(0, file_len-1);
     file_len--;
   }
   auto it = url.find_last_of('/');
-  if (it != string::npos)
+  if (it != std::string::npos)
   {
 
     file_name = url.substr(it+1, file_len-1);

@@ -40,7 +40,6 @@ class TcpServer
   const char* m_ip_address;
   uint32_t m_port;
   int64_t m_incomingMessage;
-  uint64_t m_socketAddress_len;
   std::string m_serverMessage;
   std::string main_file;
   std::string proj_dir;
@@ -48,7 +47,8 @@ class TcpServer
   int32_t m_socket;
   int32_t m_new_socket;
   struct sockaddr_in m_socketAddress;
-  #elif WIN
+  uint64_t m_socketAddress_len;
+  #elif defined(WIN)
   SOCKET m_listenSocket = INVALID_SOCKET;
   SOCKET m_clientSocket = INVALID_SOCKET;
   struct addrinfo *m_result = nullptr;
