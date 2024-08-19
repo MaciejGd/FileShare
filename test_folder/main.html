@@ -115,7 +115,7 @@
               directory: dir_url
             })
           })
-          .then(response => response.json())
+          .then(response => {response.json()})
           .then(data => {
             const fileUrl = data.fileUrl;
             //poll server until file is ready
