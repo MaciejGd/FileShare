@@ -40,7 +40,13 @@ http::TcpServer::TcpServer(const char* ip, uint32_t port, std::string file_name)
   //handling CTRL-C and CTRL-Z signals
   std::signal(SIGINT, m_signalHandler);
   //std::signal(SIGTSTP, m_signalHandler);
-
+  #ifdef WIN
+  int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+  if (iResult != 0)
+  {
+    m_exitWithError("Failed to startup a WINSOCK, error code: " + std::to_string(iResult) + "\n");
+  }
+  #endif
   //init windows members
   m_fillSocketAddr();
   m_startServer();

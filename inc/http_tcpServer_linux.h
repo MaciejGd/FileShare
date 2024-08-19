@@ -11,6 +11,7 @@
 #include <regex>
 #include <unistd.h>
 #include <filesystem>
+#include <stdio.h>
 //testing
 #include "mime_types.h"
 #include <fstream>
@@ -49,6 +50,7 @@ class TcpServer
   struct sockaddr_in m_socketAddress;
   uint64_t m_socketAddress_len;
   #elif defined(WIN)
+  WSADATA wsaData;
   SOCKET m_listenSocket = INVALID_SOCKET;
   SOCKET m_clientSocket = INVALID_SOCKET;
   struct addrinfo *m_result = nullptr;
