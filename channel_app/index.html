@@ -24,15 +24,29 @@
       flex-direction: column;
       width: 30%;
       height: 10%;
+      top: 30px;
+      /* preventing from moving buttons on very long list */
+      position: sticky;
+    }
+    .kafelek-list-container {
+        flex: 1;
+        height: 80vh;
+        width: 40vh;
+        overflow-y: auto;   
+    }
+    .kafelek-list-container::-webkit-scrollbar {
+            display: none; /* Hide scrollbar */
     }
 
     .kafelek-list {
-        flex: left;
+        /* flex: left; */
         list-style-type: none;
         padding: 0;
         margin: 0;
         font-weight: bold;
-        width: 300px; /* Adjust width as needed */
+        width: 300px;
+        /* scrollfreely when list very long */
+        /* overflow-y: auto; */
     }
 
     .kafelek-item {
@@ -43,10 +57,10 @@
         border-radius: 5px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: background-color 0.3s ease;
-        /* text-align: center; */
+        text-align: center;
         /* added for a checkbox */
         display: flex;
-        /* align-items: center; */
+        align-items: center;
         gap: 10px;
     }
     /* need to change that for focus */
@@ -114,6 +128,7 @@
         var listItem = document.createElement("li");
         var label = document.createElement("label");
         label.className = "kafelek-item";
+        label.textContent = channel;
 
         var checkbox = document.createElement("input");
         checkbox.type = "checkbox";
@@ -129,39 +144,41 @@
 
     function start(){
       initializeButtons();
-      var arr = ["TVN", "TVP", "JSON"];
+      var arr = ["TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON"];
       populateList(arr);
     }
     </script>
   </head>
   <body onload="start()">
     <div class="container">
-      <ul class="kafelek-list">
-        <li>
-          <label class="kafelek-item">
-            <input type="checkbox">
-            TVP 1
-          <label>
-        </li>
-        <li>
-          <label class="kafelek-item">
-            <input type="checkbox">
-            TVP 2
-          <label>
-        </li>
-        <li>
-          <label class="kafelek-item">
-            <input type="checkbox">
-            ESKA TV
-          <label>
-        </li>
-        <li>
-          <label class="kafelek-item">
-            <input type="checkbox">
-            TVN
-          <label>
-        </li>
-      </ul>
+        <div class="kafelek-list-container">
+        <ul class="kafelek-list">
+            <li>
+            <label class="kafelek-item">
+                <input type="checkbox">
+                TVP 1
+            <label>
+            </li>
+            <li>
+            <label class="kafelek-item">
+                <input type="checkbox">
+                TVP 2
+            <label>
+            </li>
+            <li>
+            <label class="kafelek-item">
+                <input type="checkbox">
+                ESKA TV
+            <label>
+            </li>
+            <li>
+            <label class="kafelek-item">
+                <input type="checkbox">
+                TVN
+            <label>
+            </li>
+        </ul>
+      </div>
       <div class="buttons">
         <button id="butt1">Button1</button>
         <button id="butt2">Button2</button>
