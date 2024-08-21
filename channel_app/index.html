@@ -1,0 +1,171 @@
+<!DOCTYPE html >
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>KafelekList</title>
+    <style>
+      body {
+      font-family: Arial, sans-serif;
+      background-color: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 20px;
+      flex-direction: column;
+      width: 30%;
+      height: 10%;
+    }
+
+    .kafelek-list {
+        flex: left;
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        font-weight: bold;
+        width: 300px; /* Adjust width as needed */
+    }
+
+    .kafelek-item {
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        padding: 20px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease;
+        /* text-align: center; */
+        /* added for a checkbox */
+        display: flex;
+        /* align-items: center; */
+        gap: 10px;
+    }
+    /* need to change that for focus */
+    .kafelek-item:hover {
+        background-color: black;
+        color: #f0f0f0;
+        border-color: #f0f0f0;
+    }
+    button
+    {
+      background-color: #f0f0f0;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      transition: background-color 0.3s ease;
+      font-weight: bold;
+    }
+    button:hover {
+        background-color: black;
+        color: #f0f0f0;
+        border-color: #f0f0f0;
+    }
+    /* Optional: make it responsive
+    @media (max-width: 400px) {
+        .kafelek-list {
+            width: 100%;
+        }
+    } */
+    </style>
+    <script type="text/javascript">
+      //initialize buttons along with getCheckBox are responsible for getting data from checked out channels
+    function initializeButtons()
+    {
+      document.getElementById("butt1").addEventListener('click',
+        getCheckBoxes
+      );
+    }      
+    function getCheckBoxes()
+    {
+      const items = document.querySelectorAll('.kafelek-item');
+      //additionally we can add counter for channels
+      items.forEach(function(item)
+      {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        const label = item.querySelector('label');
+        if (checkbox.checked){
+          console.log(item.textContent.trim() + ' is checked.');
+        }
+        else 
+        {
+          console.log(item.textContent.trim()+ ' is NOT checked.')
+        }
+      });
+    }
+
+    //function for creation list elements from retrieved channels
+    function populateList(data)
+    {
+      var list = document.getElementsByClassName("kafelek-list")[0];
+      //just to be sure clear list before adding to it
+      list.innerHTML = "";
+      data.forEach(function(channel){
+        var listItem = document.createElement("li");
+        var label = document.createElement("label");
+        label.className = "kafelek-item";
+
+        var checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+
+        label.textContent = channel;
+
+        //appending dynamically created elements
+        label.appendChild(checkbox);
+        listItem.appendChild(label);
+        list.appendChild(listItem);
+      });
+    }
+
+    function start(){
+      initializeButtons();
+      var arr = ["TVN", "TVP", "JSON"];
+      populateList(arr);
+    }
+    </script>
+  </head>
+  <body onload="start()">
+    <div class="container">
+      <ul class="kafelek-list">
+        <li>
+          <label class="kafelek-item">
+            <input type="checkbox">
+            TVP 1
+          <label>
+        </li>
+        <li>
+          <label class="kafelek-item">
+            <input type="checkbox">
+            TVP 2
+          <label>
+        </li>
+        <li>
+          <label class="kafelek-item">
+            <input type="checkbox">
+            ESKA TV
+          <label>
+        </li>
+        <li>
+          <label class="kafelek-item">
+            <input type="checkbox">
+            TVN
+          <label>
+        </li>
+      </ul>
+      <div class="buttons">
+        <button id="butt1">Button1</button>
+        <button id="butt2">Button2</button>
+      </div>
+    </div>
+  </body>
+</html>
