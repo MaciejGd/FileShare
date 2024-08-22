@@ -99,6 +99,7 @@
     </style>
     <script type="text/javascript">
       //initialize buttons along with getCheckBox are responsible for getting data from checked out channels
+    var array = [];
     function initializeButtons()
     {
       document.getElementById("butt1").addEventListener('click',
@@ -115,6 +116,7 @@
         const label = item.querySelector('label');
         if (checkbox.checked){
           console.log(item.textContent.trim() + ' is checked.');
+          addBlocked(item.textContent);
         }
         else 
         {
@@ -147,10 +149,35 @@
       });
     }
 
+    function addBlocked(el) {
+        // Retrieve the JSON data from the script tag
+        const jsonScript = document.getElementById('json_data');
+        //variable consisting json file
+        let jsonData = JSON.parse(jsonScript.textContent);
+
+        // Add the new app to the blockedApps array
+        jsonData.params.blocked.push(el);
+
+        // (Optional) Update the JSON back in the script tag
+        jsonScript.textContent = JSON.stringify(jsonData, null, 2);
+
+        // For demonstration purposes, log the updated JSON data to the console
+        console.log(jsonData);
+        
+    }
+
     function start(){
       initializeButtons();
       var arr = ["TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON","TVN", "TVP", "JSON"];
       populateList(arr);
+    }
+    </script>
+    <script id="json_data" type="application/json">
+    {
+        "new_application": "newOne",
+        "params" : {
+            "blocked": []
+        }
     }
     </script>
   </head>
