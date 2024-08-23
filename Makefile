@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-g --std=c++20 -o
+CFLAGS=-g --std=c++20
 OBJECT_DIR=obj
 SRC=$(wildcard src/*.cpp)
 DEPS=$(wildcard inc/*.h)
@@ -17,7 +17,7 @@ endif
 all: $(EXE)
 
 $(EXE): $(OBJ) $(OBJECT_DIR)/main.o
-	@$(CC) $^ $(CFLAGS) $@ $(LDFLAGS)
+	@$(CC) $^ $(CFLAGS) -o $@ $(LDFLAGS)
 	@echo "Build done successfully"
 
 $(OBJECT_DIR)/main.o: main.cpp $(DEPS) | $(OBJECT_DIR)

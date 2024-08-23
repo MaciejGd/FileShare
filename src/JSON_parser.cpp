@@ -42,8 +42,14 @@ void JSON_PARSER::m_CreateJSONRec(std::string& head_url, std::ostringstream& ss,
   std::vector<std::string> entries;
   for (auto& file : fs::directory_iterator(head_url))
   {
-    entries.push_back(file.path().string());
+    //on windows we need to change '\' sign for '/' 
+    std::string transformed_path = file.path().string();
+    #ifdef WIN
+    transformed_path = m_WindowsPathTransform(transformed_path);
+    #endif
+    entries.push_back(transformed_path);
     std::string child_url = file.path().string();
+    std::cout << child_url << std::endl;
     
   }
   //recursively process directory entries in sorted order
@@ -79,4 +85,19 @@ std::string JSON_PARSER::m_CreateFileName(std::string& url)
     return file_name;
   }  
   return url;
+}
+
+std::string JSON_PARSER::m_WindowsPathTransform(const std::string &file_path)
+{
+  std::string res_path;
+  for (const auto& x: file_path)
+  {
+    if (x=='\\')
+    {
+      res_path+='/';
+      continue;
+    }
+    res_path+=x;
+  }
+  return res_path;
 }

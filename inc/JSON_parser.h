@@ -10,6 +10,11 @@
 #include <fstream>
 #include <algorithm>
 //JSON  creating macros
+#ifdef  __linux__
+#define LINUX
+#elif _WIN32
+#define WIN
+#endif
 #define JSON_INIT "{\n\t\"files\" : [\n"
 #define JSON_ENDING "\n\t]\n}"
 #define JSON_END_LINE "}"
@@ -24,6 +29,7 @@ class JSON_PARSER {
   void m_CreateJSON();
   void m_CreateJSONRec(std::string& head, std::ostringstream& ss, int incantation, bool is_first = false);
   std::string m_CreateFileName(std::string& url);
+  std::string m_WindowsPathTransform(const std::string& file_path);
 public:
   JSON_PARSER(std::string dir_path);
 };
