@@ -57,7 +57,7 @@ class TcpServer
   struct addrinfo m_hints;
   #endif
   //static instance of a class needed to handle signalling
-  static TcpServer* instance;
+  static TcpServer* s_instance;
 
   std::vector<std::string> zipped_dirs;
 
@@ -74,13 +74,14 @@ class TcpServer
   void m_bind();
   void m_startListen();
   void m_acceptConnection(int &new_socket);
-  void m_sendResponse(int new_socket); 
+  void m_sendResponse(int &new_socket); 
   void m_buildResponse();
   void m_buildResponse(const std::string& file_name);
   //handlers
   void m_handleClient();
   void m_handleDirDownload(const std::string& url);
   static void m_signalHandler(int signum);
+  void cleanZippedDirs();
 public:
   TcpServer(const char* ip, uint32_t port, std::string main_file = "");
   ~TcpServer();

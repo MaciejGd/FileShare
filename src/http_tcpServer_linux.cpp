@@ -1,16 +1,17 @@
 #include "../inc/http_tcpServer_linux.h"
 #include "../inc/web_page.h"
+#include <fcntl.h>
 
 namespace http
 {
 //static instance initialization
-TcpServer* TcpServer::instance = nullptr;
-//NOT TOUCH
+TcpServer* TcpServer::s_instance = nullptr;
+
 void TcpServer::m_log(const std::string& msg)
 {
   std::cout << "[LOG] " << msg << "\n";
 }
-//NOT TOUCH
+
 void TcpServer::m_exitWithError(const std::string& msg)
 {
   std::cout << "[ERROR] " << msg << "\n";
@@ -18,7 +19,7 @@ void TcpServer::m_exitWithError(const std::string& msg)
   exit(1);
 
 }
-//NOT TOUCH
+
 std::string TcpServer::m_getMimeType(const std::string &filename)
 {
   size_t dot;
@@ -36,7 +37,7 @@ std::string TcpServer::m_getMimeType(const std::string &filename)
 http::TcpServer::TcpServer(const char* ip, uint32_t port, std::string file_name):m_ip_address(ip), m_port(port), 
   m_incomingMessage(), main_file(file_name), m_serverMessage()
 {
-  instance = this;
+  s_instance = this;
   //handling CTRL-C and CTRL-Z signals
   std::signal(SIGINT, m_signalHandler);
   //std::signal(SIGTSTP, m_signalHandler);
@@ -66,6 +67,7 @@ http::TcpServer::TcpServer(const char* ip, uint32_t port, std::string file_name)
 
 http::TcpServer::~TcpServer()
 {
+  cleanZippedDirs();
   m_closeServer();
 }
 
@@ -172,9 +174,7 @@ void TcpServer::m_startListen()
   }
   ss = "\n*** Listening on ADDRESS: " + std::string(m_ip_address) + " PORT: " + std::to_string(ntohs(m_result->ai_addr->sa_family)) + " ***\n"; 
   #endif
-  
-  
-  
+   
   m_log(ss.c_str());
 
   while (true)
@@ -199,17 +199,23 @@ void TcpServer::m_startListen()
 
 void TcpServer::m_acceptConnection(int &new_socket)
 {
-  #ifdef LINUX
-  std::cout << "[INFO]Accepting incoming socket connetion.\n";
-  new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
-  if (new_socket < 0)
-  {
-    std::string addr = inet_ntoa(m_socketAddress.sin_addr);
-    std::string info = "Server failed to accept incoming connection from ADDRESS: " + addr + "; PORT: " + 
-        std::to_string(ntohs(m_socketAddress.sin_port));
-    m_exitWithError(info.c_str());
-  }
-  #endif
+#ifdef LINUX
+    std::cout << "[INFO]Accepting incoming socket connection.\n";
+    new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
+    if (new_socket < 0) {
+        std::string addr = inet_ntoa(m_socketAddress.sin_addr);
+        std::string info = "Server failed to accept incoming connection from ADDRESS: " + addr + "; PORT: " + 
+            std::to_string(ntohs(m_socketAddress.sin_port));
+        m_exitWithError(info.c_str());
+    }
+    std::cout << "[INFO]Properly interpreted incoming connection on socket number: " << new_socket << "\n";
+#elif defined(WIN)
+    m_clientSocket = accept(m_listenSocket, NULL, NULL);
+    if (m_clientSocket == INVALID_SOCKET) {
+        m_exitWithError("accept failed: " + std::to_string(WSAGetLastError()) + "\n");
+    }
+    new_socket = m_clientSocket;
+#endif
 }
 
 //have to check it more a little
@@ -255,8 +261,16 @@ void TcpServer::m_handleClient()
   }
   //m_buildResponse(url);
   m_buildResponse(url);
+  std::cout << "[NEWDEBUG]Properly build response to a client\n";
   m_sendResponse(new_socket);
-  close(new_socket);
+  if (!close(new_socket))
+  {
+    std::cout << "[NEWDEBUG]Properly closed socket: " << new_socket << "\n";
+  }
+  else 
+  {
+    std::cout << "[ERRORNEWDEBUG]Failed to close socket: " << new_socket << "\n";
+  }
 }
 
 
@@ -283,6 +297,8 @@ void TcpServer::m_handleDirDownload(const std::string& buff)
       m_log("Failed to create zip from " + url);
       return;
     }
+    //add zipped directory to a member vector
+    zipped_dirs.push_back(zip_archive);
   }
   //open zip archive
   std::fstream file(zip_archive, std::ios::in);
@@ -302,8 +318,6 @@ void TcpServer::m_handleDirDownload(const std::string& buff)
   m_serverMessage = ss.str();
 }
 
-//NOT TOUCH
-
 void TcpServer::m_buildResponse()
 {
   m_serverMessage = HTML::webpage;
@@ -319,7 +333,6 @@ void TcpServer::m_buildResponse(const std::string &file_name)
   if (file_name == "" && main_file == "")
   {
     file_content = HTML:: webpage;
-
   }
   else
   {
@@ -349,9 +362,10 @@ void TcpServer::m_buildResponse(const std::string &file_name)
     << "\r\n\r\n";
   ss << file_content;
   m_serverMessage = ss.str();
+  //std::cout << m_serverMessage << std::endl;
 }
 
-void TcpServer::m_sendResponse(int new_socket)
+void TcpServer::m_sendResponse(int &new_socket)
 {
   int64_t bytesSent;
   #ifdef LINUX
@@ -365,7 +379,6 @@ void TcpServer::m_sendResponse(int new_socket)
     m_log("Error sending response to client, some bytes has been lost...");
 }
 
-//NOT TOUCH
 //it is actually not used at all for now (used socket options for using unused)
 void TcpServer::m_signalHandler(int signum)
 {
@@ -373,12 +386,23 @@ void TcpServer::m_signalHandler(int signum)
   //remove json file as it is no longer needed after closing server
   #ifdef LINUX
   system("rm -f ./.download.json");
-  #elif _WIN32 || _WIN64
+  #elif defined(WIN)
   system("del ./.download.json");
   #endif
-  instance->m_exitWithError(prompt.c_str());
+  s_instance->cleanZippedDirs();
+  s_instance->m_exitWithError(prompt.c_str());
 }
-
-
+//remove zipped dirs created for client to download
+void TcpServer::cleanZippedDirs()
+{
+  for (int i = zipped_dirs.size()-1; i >= 0; i--)
+  {
+    #ifdef LINUX
+    std::string dir_remove = "rm -r " + zipped_dirs[i];
+    system(dir_remove.c_str());
+    #elif defined(WIN)
+    #endif
+  }
+}
 
 }//namespace http

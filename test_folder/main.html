@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <style>
       body {
-        background-color: #4ca6ef
-;
+        /* background-color: #4ca6ef; */
+        background-color: white;
         color : #2139d1;
         margin-left: 5%;
         margin-right: 5%;
@@ -80,7 +80,6 @@
                 downloadAllButton.textContent = "⬇";
                 downloadAllButton.addEventListener('click', (event)=> {
                   event.stopPropagation();
-                  //downloadAllFiles(file);
                   downloadAll(file.url);
                 });
                 listItem.appendChild(link);
@@ -103,42 +102,38 @@
             populateList(last_node);
           }
         }
-        function downloadAll(dir_url)
-        {
+        function downloadAll(dir_url) {
           console.log('Dir url is: ', dir_url);
+          // Send a POST request to create the ZIP file and send it to client
           fetch('/downloadAll', {
-            method: 'POST',
-            headers: {
-              'Content-Type' : 'application/json'
-            },
-            body : JSON.stringify({
-              directory: dir_url
-            })
-          })
-          .then(response => {response.json()})
-          .then(data => {
-            const fileUrl = data.fileUrl;
-            //poll server until file is ready
-            checkFileAvailable(fileUrl);
-          })
-          .catch(error => console.error('Error initializing file creation: ', error));
-
-        }
-        //waiting for dir to compress
-        function checkFileAvailable(fileUrl)
-        {
-          fetch(fileUrl, {
-            method: 'HEAD'
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  directory: dir_url
+              })
           })
           .then(response => {
-            if (response.ok)
-              downloadFile(fileUrl + ".zip")
-            else 
-              setTimeout(() => checkFileAvailable(fileUrl), 2000);
+              if (!response.ok) {
+                  throw new Error('Failed to create ZIP file');
+              }
+              return response.blob();
           })
-          .catch(error => console.error('Error in avialability check'));
+          .then(blob => {
+              const fileUrl = window.URL.createObjectURL(blob);
+              var fileName = dir_url.substr(dir_url.lastIndexOf('/')+1);
+              console.log(fileName);
+              const a = document.createElement('a');
+              a.href = fileUrl;
+              a.download =  fileName + '.zip';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+          })
+          .catch(error => console.error('Error initializing file creation: ', error));
         }
-
+    
         function downloadFile(url)
         {
           const link = document.createElement('a');
@@ -146,35 +141,7 @@
           link.download = '';
           document.body.appendChild(link);
           link.click();
-          document.body.removeChild(link);
-        }
-
-
-        //the problem lays in here
-        function downloadAllFiles(directory){
-          const fileUrls = [];
-
-          function collectFileUrls(file) {
-            if (file.files && file.files.length !== 0)
-            {
-              file.files.forEach((subFile) => { collectFileUrls(subFile); }); 
-            }
-            else 
-            {
-              fileUrls.push(file.url);
-            }
-          }
-          collectFileUrls(directory);
-
-          fileUrls.forEach((url) => {
-            console.log("downloaded url: " + url);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = '';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          })
+          link.removeChild(link);
         }
         fetchJSONData();
       </script>
