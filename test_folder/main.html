@@ -162,7 +162,9 @@
           link.click();
           link.removeChild(link);
         }
-        fetchJSONData();
+        // fetchJSONData();
+        //added timeout for windows server hosting
+        setTimeout(()=>{fetchJSONData();},300);
       </script>
 	  <ul id="list">
 	  </ul>

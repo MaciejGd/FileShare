@@ -73,8 +73,13 @@ class TcpServer
   void m_fillSocketAddr();
   void m_bind();
   void m_startListen();
+  #ifdef LINUX
   void m_acceptConnection(int &new_socket);
   void m_sendResponse(int &new_socket); 
+  #elif defined(WIN)
+  void m_acceptConnection(SOCKET &new_socket);
+  void m_sendResponse(SOCKET &new_socket); 
+  #endif
   void m_buildResponse();
   void m_buildResponse(const std::string& file_name);
   //handlers

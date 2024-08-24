@@ -197,9 +197,9 @@ void TcpServer::m_startListen()
   } 
 }
 
+#ifdef LINUX
 void TcpServer::m_acceptConnection(int &new_socket)
 {
-#ifdef LINUX
     std::cout << "[INFO]Accepting incoming socket connection.\n";
     new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
     if (new_socket < 0) {
@@ -209,14 +209,8 @@ void TcpServer::m_acceptConnection(int &new_socket)
         m_exitWithError(info.c_str());
     }
     std::cout << "[INFO]Properly interpreted incoming connection on socket number: " << new_socket << "\n";
-#elif defined(WIN)
-    m_clientSocket = accept(m_listenSocket, NULL, NULL);
-    if (m_clientSocket == INVALID_SOCKET) {
-        m_exitWithError("accept failed: " + std::to_string(WSAGetLastError()) + "\n");
-    }
-    new_socket = m_clientSocket;
-#endif
 }
+#endif
 
 //have to check it more a little
 void TcpServer::m_handleClient()
@@ -249,7 +243,11 @@ void TcpServer::m_handleClient()
     regex = std::regex("\"directory\"\\s*:\\s*\"(.*?)\"");
     m_handleDirDownload(buff);
     m_sendResponse(new_socket);
+    #ifdef LINUX
     close(new_socket);
+    #elif defined(WIN)
+    closesocket(new_socket);
+    #endif
     return;
   }
   regex = std::regex("GET /([^ ]*) HTTP/1");
@@ -263,7 +261,12 @@ void TcpServer::m_handleClient()
   m_buildResponse(url);
   std::cout << "[NEWDEBUG]Properly build response to a client\n";
   m_sendResponse(new_socket);
-  if (!close(new_socket))
+  #ifdef LINUX
+  int closing_status = close(new_socket);
+  #elif defined(WIN)
+  int closing_status = closesocket(new_socket);
+  #endif
+  if (closing_status)
   {
     std::cout << "[NEWDEBUG]Properly closed socket: " << new_socket << "\n";
   }
@@ -365,19 +368,27 @@ void TcpServer::m_buildResponse(const std::string &file_name)
   //std::cout << m_serverMessage << std::endl;
 }
 
+#ifdef LINUX
 void TcpServer::m_sendResponse(int &new_socket)
 {
   int64_t bytesSent;
-  #ifdef LINUX
   bytesSent = write(new_socket, m_serverMessage.c_str(), m_serverMessage.size());
-  #elif defined(WIN)
-  bytesSent = send(m_clientSocket, m_serverMessage.c_str(), m_serverMessage.size(), 0);
-  #endif
   if (bytesSent == m_serverMessage.size())
     m_log("--- Server response sent to client ---\n*********************\n");
   else 
     m_log("Error sending response to client, some bytes has been lost...");
 }
+#elif defined(WIN)
+void TcpServer::m_sendResponse(SOCKET &new_socket)
+{
+  int64_t bytesSent;
+  bytesSent = send(new_socket, m_serverMessage.c_str(), m_serverMessage.size(), 0);
+  if (bytesSent == m_serverMessage.size())
+    m_log("--- Server response sent to client ---\n*********************\n");
+  else 
+    m_log("Error sending response to client, some bytes has been lost...");
+}
+#endif
 
 //it is actually not used at all for now (used socket options for using unused)
 void TcpServer::m_signalHandler(int signum)
