@@ -392,6 +392,7 @@ void TcpServer::m_signalHandler(int signum)
   s_instance->cleanZippedDirs();
   s_instance->m_exitWithError(prompt.c_str());
 }
+
 //remove zipped dirs created for client to download
 void TcpServer::cleanZippedDirs()
 {

@@ -5,7 +5,7 @@
     <style>
       body {
         /* background-color: #4ca6ef; */
-        background-color: white;
+        background-color: #4ca6ef;
         color : #2139d1;
         margin-left: 5%;
         margin-right: 5%;
@@ -18,19 +18,39 @@
         justify-content: space-between;
       }
       ul li {
-        background: #cce5ff;
+        background-color: #cce5ff;
         color: darkblue;
         padding: 5px;
         display: flex;
+        border: 1px solid darkblue;
+        transition: background-color 0.4s ease;
+      }
+      ul li:hover {
+        background-color: darkblue;
       }
       a {
         flex-grow : 1;
         text-align: left;
       }
+      a:hover {
+        color: #cce5ff;
+      }
       #buttonID {
         color : darkblue;
         background-color: #4ca6ef;
         font-size: 0.8em; /* Adjust the size of the download symbol */
+      }
+      #prev {
+        background-color: #cce5ff;
+        color: darkblue;
+        text-align: center;
+        width: 10%;
+        height: 15%;
+        font-size: 15px;
+      }
+      #prev:hover {
+        background-color: darkblue;
+        color: #cce5ff;
       }
     </style>
   </head>
@@ -38,7 +58,7 @@
     <div>
       <h1 id="title">FILES TO DOWNLOAD</h1>
       <button id="prev" onclick="prev_node()">
-        Previous_dir
+        PREVIOUS DIR
       </button>
       <script>
         var previous_node = [];
@@ -69,7 +89,6 @@
               if (file.files && file.files.length !== 0) {              
                 link.href = "#";
                 link.textContent = file.name + " (Directory)";
-                link.style.color = '#071a8f';
                 link.addEventListener('click', (event) => {
                     event.preventDefault();
                     previous_node.push(data);
