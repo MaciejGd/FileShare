@@ -197,21 +197,6 @@ void TcpServer::m_startListen()
   } 
 }
 
-#ifdef LINUX
-void TcpServer::m_acceptConnection(int &new_socket)
-{
-    std::cout << "[INFO]Accepting incoming socket connection.\n";
-    new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
-    if (new_socket < 0) {
-        std::string addr = inet_ntoa(m_socketAddress.sin_addr);
-        std::string info = "Server failed to accept incoming connection from ADDRESS: " + addr + "; PORT: " + 
-            std::to_string(ntohs(m_socketAddress.sin_port));
-        m_exitWithError(info.c_str());
-    }
-    std::cout << "[INFO]Properly interpreted incoming connection on socket number: " << new_socket << "\n";
-}
-#endif
-
 //have to check it more a little
 void TcpServer::m_handleClient()
 {
@@ -282,6 +267,7 @@ void TcpServer::m_handleDirDownload(const std::string& buff)
   std::regex regex("\"directory\"\\s*:\\s*\"(.*?)\"");
   std::smatch matches;
   std::string url;
+  std::cout << "BUFF\n" << buff << "\nENDOFBUFF\n";
   //match pattern to get url
   if (std::regex_search(buff, matches, regex))
   {
@@ -291,10 +277,15 @@ void TcpServer::m_handleDirDownload(const std::string& buff)
   std::string response;
   //created zip name
   std::string zip_archive = url + ".zip";
-  //check if zip does not exist and create it
+  //check if zip does not exist and create it if not 
   if (!fs::exists(zip_archive)) 
   {
+    #ifdef LINUX
     std::string command = "zip -r " + url + " " + url;
+    #elif defined(WIN)
+    std::cout << "[LOG]Requested zip path: " << url << std::endl;
+    std::string command = "powershell.exe -Command \"Compress-Archive -Path " + url + " -DestinationPath " + url + ".zip\"";
+    #endif
     if (system(command.c_str()))
     {
       m_log("Failed to create zip from " + url);
@@ -369,6 +360,19 @@ void TcpServer::m_buildResponse(const std::string &file_name)
 }
 
 #ifdef LINUX
+void TcpServer::m_acceptConnection(int &new_socket)
+{
+    std::cout << "[INFO]Accepting incoming socket connection.\n";
+    new_socket = accept(m_socket, (sockaddr *)&m_socketAddress, (socklen_t*)&m_socketAddress_len);
+    if (new_socket < 0) {
+        std::string addr = inet_ntoa(m_socketAddress.sin_addr);
+        std::string info = "Server failed to accept incoming connection from ADDRESS: " + addr + "; PORT: " + 
+            std::to_string(ntohs(m_socketAddress.sin_port));
+        m_exitWithError(info.c_str());
+    }
+    std::cout << "[INFO]Properly interpreted incoming connection on socket number: " << new_socket << "\n";
+}
+
 void TcpServer::m_sendResponse(int &new_socket)
 {
   int64_t bytesSent;
@@ -398,7 +402,7 @@ void TcpServer::m_signalHandler(int signum)
   #ifdef LINUX
   system("rm -f ./.download.json");
   #elif defined(WIN)
-  system("del ./.download.json");
+  system("del .download.json");
   #endif
   s_instance->cleanZippedDirs();
   s_instance->m_exitWithError(prompt.c_str());
@@ -413,6 +417,8 @@ void TcpServer::cleanZippedDirs()
     std::string dir_remove = "rm -r " + zipped_dirs[i];
     system(dir_remove.c_str());
     #elif defined(WIN)
+    std::string dir_remove = "del " + zipped_dirs[i];
+    system(dir_remove.c_str());
     #endif
   }
 }

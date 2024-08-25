@@ -123,6 +123,8 @@
         }
         function downloadAll(dir_url) {
           console.log('Dir url is: ', dir_url);
+          var request = JSON.stringify({directory: dir_url});
+          console.log(request);
           // Send a POST request to create the ZIP file and send it to client
           fetch('/downloadAll', {
               method: 'POST',

@@ -1,0 +1,36 @@
+{
+	"files" : [
+	{
+		"url":"./download",
+		"name":"download",
+		"files":[
+		{
+			"url":"./download/downlaod_sub",
+			"name":"downlaod_sub",
+			"files":[
+			{
+				"url":"./download/downlaod_sub/file_sub1",
+				"name":"file_sub1",
+				"files":[]
+			},
+			{
+				"url":"./download/downlaod_sub/file_sub2",
+				"name":"file_sub2",
+				"files":[]
+			}
+			]
+		},
+		{
+			"url":"./download/file1",
+			"name":"file1",
+			"files":[]
+		},
+		{
+			"url":"./download/file2",
+			"name":"file2",
+			"files":[]
+		}
+		]
+	}
+	]
+}

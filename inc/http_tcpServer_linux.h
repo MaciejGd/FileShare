@@ -77,7 +77,6 @@ class TcpServer
   void m_acceptConnection(int &new_socket);
   void m_sendResponse(int &new_socket); 
   #elif defined(WIN)
-  void m_acceptConnection(SOCKET &new_socket);
   void m_sendResponse(SOCKET &new_socket); 
   #endif
   void m_buildResponse();
