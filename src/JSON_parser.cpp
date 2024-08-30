@@ -49,7 +49,6 @@ void JSON_PARSER::m_CreateJSONRec(std::string& head_url, std::ostringstream& ss,
     #endif
     entries.push_back(transformed_path);
     std::string child_url = file.path().string();
-    std::cout << child_url << std::endl;
     
   }
   //recursively process directory entries in sorted order

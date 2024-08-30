@@ -85,7 +85,8 @@ class TcpServer
   void m_handleClient();
   void m_handleDirDownload(const std::string& url);
   static void m_signalHandler(int signum);
-  void cleanZippedDirs();
+  void m_cleanZippedDirs();
+  void m_transformPathForWindows(std::string& path);
 public:
   TcpServer(const char* ip, uint32_t port, std::string main_file = "");
   ~TcpServer();

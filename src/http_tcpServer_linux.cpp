@@ -67,7 +67,7 @@ http::TcpServer::TcpServer(const char* ip, uint32_t port, std::string file_name)
 
 http::TcpServer::~TcpServer()
 {
-  cleanZippedDirs();
+  m_cleanZippedDirs();
   m_closeServer();
 }
 
@@ -207,18 +207,22 @@ void TcpServer::m_handleClient()
   #endif
   char buffer[BUFFER_SIZE] = {0};
   int64_t bytesReceived = 0;
-  #ifdef LINUX
-  bytesReceived = read(new_socket, buffer, BUFFER_SIZE);
-  #elif defined(WIN)
-  bytesReceived = recv(new_socket, buffer, BUFFER_SIZE, 0);
-  #endif
-  m_log(std::string(buffer));
+  std::string buff(buffer);  
+  //bytesReceived = recv(new_socket, buffer, BUFFER_SIZE, 0);
+  //testing 
+  while ((bytesReceived = recv(new_socket, buffer, BUFFER_SIZE, 0)) > 0) {
+    buff.append(buffer, bytesReceived);
+    // Check if the entire HTTP request has been received (look for the end of headers)
+    if (buff.find("\r\n\r\n") != std::string::npos) {
+        break;
+    }
+}
+  //end of testing
   if (bytesReceived < 0)
   {
     m_exitWithError("Failed to read bytes from client socket connection");
   }
 
-  std::string buff(buffer);
   //handle POST request
   if (buff.find("POST") != std::string::npos)
   {
@@ -391,12 +395,12 @@ void TcpServer::m_signalHandler(int signum)
   #elif defined(WIN)
   system("del .download.json");
   #endif
-  s_instance->cleanZippedDirs();
+  s_instance->m_cleanZippedDirs();
   s_instance->m_exitWithError(prompt.c_str());
 }
 
 //remove zipped dirs created for client to download
-void TcpServer::cleanZippedDirs()
+void TcpServer::m_cleanZippedDirs()
 {
   for (int i = zipped_dirs.size()-1; i >= 0; i--)
   {
@@ -404,10 +408,25 @@ void TcpServer::cleanZippedDirs()
     std::string dir_remove = "rm -r " + zipped_dirs[i];
     system(dir_remove.c_str());
     #elif defined(WIN)
-    std::string dir_remove = "del " + zipped_dirs[i];
+    m_transformPathForWindows(zipped_dirs[i]);
+    std::string dir_remove = "del \"" + zipped_dirs[i] + "\"";
+    std::cout << "erasing content: \"" << dir_remove << "\"" << std::endl;
     system(dir_remove.c_str());
+    
     #endif
   }
 }
+
+#ifdef WIN
+void TcpServer::m_transformPathForWindows(std::string& path)
+{
+  //need to transform path to "windows" style to properly remove it
+  for (int i = 0; i < path.size(); i++)
+  {
+    if (path[i]=='/')
+      path[i] = '\\';
+  }
+}
+#endif
 
 }//namespace http
