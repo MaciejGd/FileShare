@@ -23,27 +23,63 @@
 //
 //
 //
+bool HOSTAPP = false;
+bool HELP = false;
+const char* APP_PATH = "";
+const char* DOWNLOAD_PATH = "";
 
-
-void inputAnalyze(const char* argv)
+void inputAnalyze(int argc, const char** argv)
 {
   //if statements can be used in here or some other solution 
-  if (argv == "\n")
+  std::string prev="";
+  std::string actual="";
+  for (int i = 1; i < argc; i++)
   {
-
+    actual = argv[i];
+    //hosting html file
+    if (prev == "--serve" || prev == "-s")
+    {
+      APP_PATH = argv[i];
+    }
+    else if (prev == "--path" || prev == "-p")
+    {
+      DOWNLOAD_PATH = argv[i];
+    }
+    else if (actual == "--help" || actual == "-h")
+    {
+      HELP = true;
+      break;
+    }
+    prev = argv[i];
+    //std::cout << prev << std::endl;
   }
 }
 
-
 int main(int argc, const char** argv)
 {
+  //testing input analyzis
   for (int i = 1; i < argc; i++)
-    inputAnalyze(argv[i]);
-  JSON_PARSER parser("./download/");
-  if (argc == 2)
-    http::TcpServer server = http::TcpServer("0.0.0.0", 8080, std::string(argv[1]));
-  else 
-    http::TcpServer server = http::TcpServer("0.0.0.0", 8080);
-  system("rm -f ./download.json");
+  {
+    //std::cout << argv[i] << std::endl;
+  }
+  inputAnalyze(argc, argv);
+  if (HELP)
+  {
+    std::cout << "\n*************\n";
+    std::cout <<     "* FILESHARE *\n";
+    std::cout <<     "*************\n\n";
+    std::cout << "FileShare application is used for hosting server in local network. Simple web code has been embedded inside of the server code. Create directory named download and simply type fileServer to host server on your machine. On another device connected to the same network enter url \"server_ip\":8000 to access and download files from download directory from another device. If passed no arguments \"download\" directory is taken by default. You can add -p or --path flag to specify directory you want to share.\n\n" << std::endl;
+    std::cout << "\t-p or --path  : specify path of hosted directory after the flag\n";
+    std::cout << "\t-s or --serve : use application as server for website, specify index.html file after the flag\n";
+    std::cout << "\t-h or --help  : show info about application\n\n";
+  }
+  // for (int i = 1; i < argc; i++)
+  //   inputAnalyze(argv[i]);
+  // JSON_PARSER parser("./download/");
+  // if (argc == 2)
+  //   http::TcpServer server = http::TcpServer("0.0.0.0", 8080, std::string(argv[1]));
+  // else 
+  //   http::TcpServer server = http::TcpServer("0.0.0.0", 8080);
+  // system("rm -f ./download.json");
   return 0;
 }
