@@ -182,7 +182,6 @@ void TcpServer::m_startListen()
     m_log("Waiting for a new connection...\n");
     #ifdef LINUX
     m_acceptConnection(m_new_socket);
-
     std::thread clientThread(&TcpServer::m_handleClient, this);
     #elif defined(WIN)
     m_clientSocket = accept(m_listenSocket, NULL, NULL);
@@ -197,7 +196,6 @@ void TcpServer::m_startListen()
   } 
 }
 
-//have to check it more a little
 void TcpServer::m_handleClient()
 {
   #ifdef LINUX
@@ -207,23 +205,15 @@ void TcpServer::m_handleClient()
   #endif
   char buffer[BUFFER_SIZE] = {0};
   int64_t bytesReceived = 0;
+  
+  bytesReceived = recv(new_socket, buffer, BUFFER_SIZE, 0);
   std::string buff(buffer);  
-  //bytesReceived = recv(new_socket, buffer, BUFFER_SIZE, 0);
-  //testing 
-  while ((bytesReceived = recv(new_socket, buffer, BUFFER_SIZE, 0)) > 0) {
-    buff.append(buffer, bytesReceived);
-    // Check if the entire HTTP request has been received (look for the end of headers)
-    if (buff.find("\r\n\r\n") != std::string::npos) {
-        break;
-    }
-}
   //end of testing
   if (bytesReceived < 0)
   {
     m_exitWithError("Failed to read bytes from client socket connection");
   }
-
-  //handle POST request
+  //handle POST request (dir download)
   if (buff.find("POST") != std::string::npos)
   {
     m_handleDirDownload(buff);
