@@ -217,15 +217,11 @@ void TcpServer::m_handleClient()
   {
     m_exitWithError("Failed to read bytes from client socket connection");
   }
-  //creating regex for checking mime types requested
-  std::regex regex;
-  std::smatch matches;
+
   std::string buff(buffer);
-  std::string url;
   //handle POST request
   if (buff.find("POST") != std::string::npos)
   {
-    regex = std::regex("\"directory\"\\s*:\\s*\"(.*?)\"");
     m_handleDirDownload(buff);
     m_sendResponse(new_socket);
     #ifdef LINUX
@@ -235,7 +231,9 @@ void TcpServer::m_handleClient()
     #endif
     return;
   }
-  regex = std::regex("GET /([^ ]*) HTTP/1");
+  std::string url;
+  std::smatch matches;
+  std::regex regex = std::regex("GET /([^ ]*) HTTP/1");
   if (std::regex_search(buff, matches, regex))
   {
     url = matches[1].str();
@@ -244,36 +242,25 @@ void TcpServer::m_handleClient()
   }
   //m_buildResponse(url);
   m_buildResponse(url);
-  std::cout << "[NEWDEBUG]Properly build response to a client\n";
   m_sendResponse(new_socket);
   #ifdef LINUX
   int closing_status = close(new_socket);
   #elif defined(WIN)
   int closing_status = closesocket(new_socket);
   #endif
-  if (closing_status)
-  {
-    std::cout << "[NEWDEBUG]Properly closed socket: " << new_socket << "\n";
-  }
-  else 
-  {
-    std::cout << "[ERRORNEWDEBUG]Failed to close socket: " << new_socket << "\n";
-  }
 }
 
 
 void TcpServer::m_handleDirDownload(const std::string& buff)
 {
+  //find requested zip file in incoming json
   std::regex regex("\"directory\"\\s*:\\s*\"(.*?)\"");
   std::smatch matches;
   std::string url;
   std::cout << "BUFF\n" << buff << "\nENDOFBUFF\n";
   //match pattern to get url
   if (std::regex_search(buff, matches, regex))
-  {
     url = matches[1].str();
-    std::cout << "Requested url found in request is: " << url << std::endl;
-  }
   std::string response;
   //created zip name
   std::string zip_archive = url + ".zip";
@@ -288,7 +275,7 @@ void TcpServer::m_handleDirDownload(const std::string& buff)
     #endif
     if (system(command.c_str()))
     {
-      m_log("Failed to create zip from " + url);
+      m_log("[ERROR]Failed to create zip from " + url);
       return;
     }
     //add zipped directory to a member vector
