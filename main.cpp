@@ -25,8 +25,8 @@
 //
 bool HOSTAPP = false;
 bool HELP = false;
-const char* APP_PATH = "";
-const char* DOWNLOAD_PATH = "";
+std::string APP_PATH = "";
+std::string DOWNLOAD_PATH = "";
 
 void inputAnalyze(int argc, const char** argv)
 {
@@ -40,10 +40,12 @@ void inputAnalyze(int argc, const char** argv)
     if (prev == "--serve" || prev == "-s")
     {
       APP_PATH = argv[i];
+      break;
     }
     else if (prev == "--path" || prev == "-p")
     {
       DOWNLOAD_PATH = argv[i];
+      break;
     }
     else if (actual == "--help" || actual == "-h")
     {
@@ -72,7 +74,23 @@ int main(int argc, const char** argv)
     std::cout << "\t-p or --path  : specify path of hosted directory after the flag\n";
     std::cout << "\t-s or --serve : use application as server for website, specify index.html file after the flag\n";
     std::cout << "\t-h or --help  : show info about application\n\n";
+    return 0;
   }
+  else if (APP_PATH!="")
+  {
+    http::TcpServer server = http::TcpServer("0.0.0.0", 8080, std::string(argv[1]));
+    return 0;
+  }
+  std::cout << DOWNLOAD_PATH << std::endl;
+  if (DOWNLOAD_PATH!="")
+  {
+    JSON_PARSER parser(DOWNLOAD_PATH);
+  }
+  else {
+    JSON_PARSER parser("./download/");
+  }
+  http::TcpServer server = http::TcpServer("0.0.0.0", 8080);
+  
   // for (int i = 1; i < argc; i++)
   //   inputAnalyze(argv[i]);
   // JSON_PARSER parser("./download/");

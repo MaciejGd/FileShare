@@ -311,10 +311,11 @@ void TcpServer::m_buildResponse(const std::string &file_name)
   }
   else
   {
+    //TODO -> open in binary mode only for specified mime type
     if (file_name != "")
-      file.open(proj_dir + file_name, std::ios::in); 
+      file.open(proj_dir + file_name, std::ios::in | std::ios::binary); 
     else 
-      file.open(main_file, std::ios::in);
+      file.open(main_file, std::ios::in | std::ios::binary);
   //building response
     if (file.fail())
     {
