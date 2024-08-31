@@ -2,7 +2,7 @@
 
 ## About
 FileShare is open source command-line tool used for hosting files over network. Any type of a file is supported for hosting. Even directories can be hosted for download. Uppon request for downloading directory
-server would automatically create archive version of it (.zip) and serve it. FileShare can be also used like a simple one-liner server.
+server would automatically create archive version of it (.zip) and serve it. After opening server for file sharing, JSON file named `.download.json` storing information about files hosted would be created. Zip files as well as JSON would be automatically removed after closing the server so no additional info about running application will be stored on a system after exiting :)). FileShare can be also used like a simple one-liner server. 
 
 ## Setup
 To use FileShare you need to build your project locally. Application can run on Linux and Windows Platforms, MacOS has not been tested. To build executable simply clone this repository using:
