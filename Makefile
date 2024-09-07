@@ -4,13 +4,11 @@ OBJECT_DIR=obj
 SRC=$(wildcard src/*.cpp)
 DEPS=$(wildcard inc/*.h)
 OBJ=$(patsubst src/%.cpp, $(OBJECT_DIR)/%.o, $(SRC))
-EXE=server
+EXE=FileShare
 
 ifeq ($(OS), Windows_NT)
-	EXE=server.exe
+	EXE:=$(EXE).exe
 	LDFLAGS+=-lWs2_32
-else 
-	EXE=server
 endif
 
 
