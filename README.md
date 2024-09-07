@@ -13,8 +13,8 @@ After following this steps executable for your operating system should be build.
 
 ## Usage
 To use FileShare:
-1. Go to location you store **FileShare** executable file and create directory named **download**(Optionally you can add FileShare.exe to your environment path variable and use it wherever you want using command line!).
-2. Put the files you want to share in a **download** dir if flag -p has not been used(look at **Additional options** tab for more information).
+1. Go to location you store **FileShare** executable file and create directory named **download**(Optionally you can add **FileShare.exe** to your environment path variable and use it wherever you want using command line!).
+2. Put the files you want to share in a **download** dir if flag `-p` has not been used (look at **Additional options** tab for more information).
 3. Launch server application.
 4. From another device go to a browser and in url field type `server_device_ip:8080`, simple website should be displayed.
 5. On entered website client can browse through files and download files he wants to.
@@ -22,5 +22,5 @@ To use FileShare:
 ### Additional options
 When launching server using command line additional flags can be specified:
 * -h or --help  : get information about application
-* -p or --path  : after using this flag specify the path you want to host to a client instead of **download** dir
+* -p or --path  : after using flag specify the path to directory you want to host to a client instead of **download** dir
 * -f or --serve : after this flag specify index.html file you want to serve (one-liner usage of FileShare)
